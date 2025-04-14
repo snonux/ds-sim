@@ -25,8 +25,8 @@ public class VSInternalTimeSyncProtocol extends VSAbstractProtocol {
      * @see events.VSAbstractProtocol#onClientInit()
      */
     public void onClientInit() {
-        initLong("t_min", 2000, "Max. Übetragungszeit", "ms");
-        initLong("t_max", 500, "Min. Übertragungszeit", "ms");
+        initLong("t_min", 2000, "Max. transmission time", "ms");
+        initLong("t_max", 500, "Min. transmission time", "ms");
     }
 
     /* (non-Javadoc)
@@ -66,9 +66,9 @@ public class VSInternalTimeSyncProtocol extends VSAbstractProtocol {
         long serverTime = recvMessage.getLong("time");
         long newTime = serverTime + (long) ((tMax + tMin) / 2 );
 
-        log("Server Zeit: " + serverTime + "; (t_min,t_max): (" + tMin +
-            "," + tMax + "); Alte Zeit: " + process.getTime() +
-            "; Neue Zeit: " + newTime + "; Offset: " +
+        log("Server time: " + serverTime + "; (t_min,t_max): (" + tMin +
+            "," + tMax + "); Old time: " + process.getTime() +
+            "; New time: " + newTime + "; Offset: " +
             (process.getTime() - newTime));
 
         process.setTime(newTime);

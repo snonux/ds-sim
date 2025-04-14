@@ -48,7 +48,7 @@ public class VSBerkelyTimeProtocol extends VSAbstractProtocol {
         Vector<Integer> vec = new Vector<Integer>();
         vec.add(1);
         vec.add(3);
-        initVector("pids", vec, "PIDs beteiliger Prozesse");
+        initVector("pids", vec, "PIDs of participating processes");
     }
 
     /* (non-Javadoc)
@@ -183,7 +183,7 @@ public class VSBerkelyTimeProtocol extends VSAbstractProtocol {
             long timeDiff = recvMessage.getLong("timeDiff");
             //long recvTime = process.getTime();
             long newTime = process.getTime() + timeDiff;
-            log("Neue Zeit: " + newTime);
+            log("New time: " + newTime);
 
             process.setTime(newTime);
         }
