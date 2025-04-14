@@ -230,8 +230,10 @@ abstract public class VSAbstractEvent extends VSSerializablePrefs {
         this.eventClassname = (String) objectInputStream.readObject();
         this.eventShortname = createShortname(savedEventShortname);
 
-        if (VSSerialize.DEBUG)
-            System.out.println(eventClassname);
+        if (VSSerialize.DEBUG) {
+            System.out.println("eventClassname: " + eventClassname);
+            System.out.println("eventShortname: " + eventShortname);
+        }
 
         serialize.setObject(id, "event", this);
 

@@ -66,9 +66,8 @@ public class VSExternalTimeSyncProtocol extends VSAbstractProtocol {
         long serverTime = recvMessage.getLong("time");
         long newTime = serverTime + (long) (roundTripTime / 2);
 
-        log("Server Zeit: " + serverTime + "; RTT: " + roundTripTime +
-            "; Alte Zeit: " + recvTime + "; Neue Zeit: " + newTime +
-            "; Offset: " + (newTime - recvTime));
+        log("Server time: " + serverTime + "; RTT: " + roundTripTime + "; Old time: " + recvTime + "; New time: " + newTime + "; Offset: " + (newTime - recvTime));
+
         process.setTime(newTime);
     }
 

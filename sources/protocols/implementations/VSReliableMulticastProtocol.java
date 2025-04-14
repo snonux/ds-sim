@@ -78,11 +78,11 @@ public class VSReliableMulticastProtocol extends VSAbstractProtocol {
             else
                 return;
 
-            log("ACK von Prozess " + pid + " erhalten!");
+            log("ACK from process " + pid + " received!");
+
 
             if (pids.size() == 0) {
-                log("ACKs von allen beteiligten Prozessen " +
-                    "erhalten!");
+                log("ACKs from all involved processes received!");
 
                 /* Remove the active schedule which has been created in the
                    onClientStart method */
@@ -125,10 +125,11 @@ public class VSReliableMulticastProtocol extends VSAbstractProtocol {
             sendMessage(message);
 
             if (ackSent) {
-                log("ACK erneut versendet");
+                log("ACK sent again");
 
             } else {
-                log("ACK versendet");
+                log("ACK sent");
+
                 ackSent = true;
             }
         }

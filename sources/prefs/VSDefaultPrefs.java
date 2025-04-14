@@ -80,7 +80,7 @@ public class VSDefaultPrefs extends VSSerializablePrefs {
         initString("lang.message.recv", "Message received");
         initString("lang.message.sent", "Message sent");
         initString("lang.mode.expert", "Expert mode");
-        initString("lang.name", "VS-Simulator 1.1");
+        initString("lang.name", "VS-Simulator 1.2-beta");
         initString("lang.ok", "OK");
         initString("lang.open", "Open");
         initString("lang.pause", "Pause");

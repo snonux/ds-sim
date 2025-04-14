@@ -844,7 +844,6 @@ public class VSPrefs {
         String val = stringPrefs.get(key);
 
         if (val == null) {
-            // TODO: Redirect all string keys with prefix "lang" to static lang map.
             System.err.println("Fatal: No such string config value \"" + key + "\"");
             System.exit(1);
         }
