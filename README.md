@@ -1,6 +1,6 @@
-vs-sim
+ds-sim
 ======
 
-VS-Sim is an open source simulator programmed in Java for distributed systems. VS-Sim stands for "Verteilte Systeme Simulator" which is the german translation for "Distributed Sytstems Simulator". The VS-Sim project was my diploma thesis at the Aachen University of Applied Sciences.
+VS-Sim is an open source simulator programmed in Java for distributed systems. VS-Sim stands for "Verteilte Systeme Simulator," which is the German translation for "Distributed Systems Simulator."
 
-![Screenshot](screenshots/vs-ss1.jpg "VS-Sim")
+![Screenshot](screenshots/vs-ss1.jpg "DS-Sim")
