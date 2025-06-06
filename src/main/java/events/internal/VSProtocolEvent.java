@@ -111,8 +111,10 @@ public class VSProtocolEvent extends VSAbstractInternalEvent
             protocol.isServer(isProtocolActivation);
 
         StringBuffer buffer = new StringBuffer();
-        buffer.append(VSRegisteredEvents.getShortnameByClassname(
-                          protocolClassname));
+        buffer.append(VSRegisteredEvents.getShortnameByClassname(protocolClassname));
+        if (buffer.length() == 0) {
+            buffer.append(protocolClassname);
+        }
 
         buffer.append(" ");
         buffer.append(isClientProtocol
@@ -122,7 +124,7 @@ public class VSProtocolEvent extends VSAbstractInternalEvent
         buffer.append(" ");
         buffer.append(isProtocolActivation
                       ? prefs.getString("lang.activated")
-                      : prefs.getString("langactivated"));
+                      : prefs.getString("lang.deactivated"));
 
         log(buffer.toString());
     }
@@ -162,14 +164,30 @@ public class VSProtocolEvent extends VSAbstractInternalEvent
         /** For later backwards compatibility, to add more stuff */
         objectInputStream.readObject();
 
+        // Set protocolClassname before calling createShortname
         protocolClassname = (String) objectInputStream.readObject();
+        isClientProtocol = ((Boolean) objectInputStream.readObject()).booleanValue();
+        isProtocolActivation = ((Boolean) objectInputStream.readObject()).booleanValue();
 
-        isClientProtocol = ((Boolean)
-                            objectInputStream.readObject()).booleanValue();;
-        isProtocolActivation = ((Boolean)
-                                objectInputStream.readObject()).booleanValue();;
+        // Set the event shortname using current localization
+        this.setShortname(createShortname(null));
 
         /** For later backwards compatibility, to add more stuff */
         objectInputStream.readObject();
+    }
+
+    protected String createShortname(String savedShortname) {
+        // Always use current localization strings
+        String protocolShortname = VSRegisteredEvents.getShortnameByClassname(protocolClassname);
+        if (protocolShortname == null) {
+            protocolShortname = protocolClassname;
+        }
+        String clientServer = isClientProtocol ? 
+            prefs.getString("lang.client") : 
+            prefs.getString("lang.server");
+        String activateDeactivate = isProtocolActivation ?
+            prefs.getString("lang.activated") :
+            prefs.getString("lang.deactivated");
+        return protocolShortname + " " + clientServer + " " + activateDeactivate;
     }
 }

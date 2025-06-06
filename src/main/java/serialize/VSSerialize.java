@@ -208,14 +208,53 @@ public final class VSSerialize {
             FileInputStream fileInputStream = new FileInputStream(filename);
             ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
 
+            // Create new prefs with current localization
             VSDefaultPrefs prefs = new VSDefaultPrefs();
-            prefs.deserialize(this, objectInputStream);
-            prefs.addWithDefaults();
+            prefs.fillWithDefaults(); // This sets up current localization strings
+            
+            // Read the serialized prefs but don't use their strings
+            VSSerializablePrefs serializedPrefs = new VSSerializablePrefs();
+            serializedPrefs.deserialize(this, objectInputStream);
+            
+            // Copy non-string values from serialized prefs
+            for (String key : serializedPrefs.getIntegerKeySet()) {
+                if (!key.startsWith("lang.")) {
+                    prefs.initInteger(key, serializedPrefs.getInteger(key));
+                }
+            }
+            for (String key : serializedPrefs.getBooleanKeySet()) {
+                if (!key.startsWith("lang.")) {
+                    prefs.initBoolean(key, serializedPrefs.getBoolean(key));
+                }
+            }
+            for (String key : serializedPrefs.getFloatKeySet()) {
+                if (!key.startsWith("lang.")) {
+                    prefs.initFloat(key, serializedPrefs.getFloat(key));
+                }
+            }
+            for (String key : serializedPrefs.getColorKeySet()) {
+                if (!key.startsWith("lang.")) {
+                    prefs.initColor(key, serializedPrefs.getColor(key));
+                }
+            }
+            for (String key : serializedPrefs.getVectorKeySet()) {
+                if (!key.startsWith("lang.")) {
+                    prefs.initVector(key, serializedPrefs.getVector(key));
+                }
+            }
+            for (String key : serializedPrefs.getLongKeySet()) {
+                if (!key.startsWith("lang.")) {
+                    prefs.initLong(key, serializedPrefs.getLong(key));
+                }
+            }
 
             this.setObject("prefs", prefs);
 
             simulator = new VSSimulator(prefs, simulatorFrame);
             simulatorFrame.addSimulator(simulator);
+            
+            // Store the current prefs in the serialize object for use during deserialization
+            this.setObject("current_prefs", prefs);
             simulator.deserialize(this, objectInputStream);
 
         } catch (Exception e) {

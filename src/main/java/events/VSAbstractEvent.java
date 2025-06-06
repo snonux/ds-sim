@@ -228,7 +228,12 @@ abstract public class VSAbstractEvent extends VSSerializablePrefs {
         int id = ((Integer) objectInputStream.readObject()).intValue();
         String savedEventShortname = (String) objectInputStream.readObject();
         this.eventClassname = (String) objectInputStream.readObject();
-        this.eventShortname = createShortname(savedEventShortname);
+        
+        // Always use current localization strings
+        this.eventShortname = VSRegisteredEvents.getShortnameByClassname(eventClassname);
+        if (this.eventShortname == null) {
+            this.eventShortname = createShortname(savedEventShortname);
+        }
 
         if (VSSerialize.DEBUG) {
             System.out.println("eventClassname: " + eventClassname);

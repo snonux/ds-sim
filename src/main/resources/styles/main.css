@@ -1,0 +1,116 @@
+/* Main container styles */
+.main-container {
+    -fx-background-color: #f5f5f5;
+}
+
+/* Top container styles */
+.top-container {
+    -fx-background-color: #ffffff;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);
+}
+
+/* Menu styles */
+.main-menu {
+    -fx-background-color: #ffffff;
+}
+
+.main-menu .menu {
+    -fx-padding: 5 10;
+}
+
+.main-menu .menu-item {
+    -fx-padding: 5 10;
+}
+
+.main-menu .menu-item:hover {
+    -fx-background-color: #f0f0f0;
+}
+
+/* Toolbar styles */
+.main-toolbar {
+    -fx-background-color: #ffffff;
+    -fx-padding: 5;
+    -fx-spacing: 5;
+}
+
+.toolbar-button {
+    -fx-background-color: transparent;
+    -fx-padding: 5 10;
+    -fx-cursor: hand;
+}
+
+.toolbar-button:hover {
+    -fx-background-color: #f0f0f0;
+    -fx-background-radius: 3;
+}
+
+/* Tab pane styles */
+.simulator-tabs {
+    -fx-background-color: #ffffff;
+}
+
+.simulator-tabs .tab-header-area .tab-header-background {
+    -fx-background-color: #ffffff;
+}
+
+.simulator-tabs .tab {
+    -fx-background-color: #f0f0f0;
+    -fx-padding: 5 15;
+}
+
+.simulator-tabs .tab:selected {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 0 0 2 0;
+}
+
+/* Button styles */
+.start-button {
+    -fx-graphic: url('/icons/start.png');
+}
+
+.pause-button {
+    -fx-graphic: url('/icons/pause.png');
+}
+
+.reset-button {
+    -fx-graphic: url('/icons/reset.png');
+}
+
+.replay-button {
+    -fx-graphic: url('/icons/replay.png');
+}
+
+/* General styles */
+.button {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 3;
+    -fx-padding: 5 10;
+}
+
+.button:hover {
+    -fx-background-color: #f0f0f0;
+}
+
+.button:pressed {
+    -fx-background-color: #e0e0e0;
+}
+
+/* Dialog styles */
+.dialog-pane {
+    -fx-background-color: #ffffff;
+}
+
+.dialog-pane .header-panel {
+    -fx-background-color: #f5f5f5;
+}
+
+.dialog-pane .button-bar .button {
+    -fx-background-color: #2196f3;
+    -fx-text-fill: white;
+}
+
+.dialog-pane .button-bar .button:hover {
+    -fx-background-color: #1976d2;
+} 

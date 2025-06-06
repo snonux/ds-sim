@@ -49,6 +49,7 @@ public class VSDefaultPrefs extends VSSerializablePrefs {
         initString("lang.about.info", "This program used to be the diploma thesis of Paul C. Buetow. Please contact vs-sim@dev.buetow.org, if you find any errors!");
         initString("lang.activate", "activate");
         initString("lang.activated", "activated");
+        initString("lang.deactivated", "deactivated");
         initString("lang.actualize", "Activation");
         initString("lang.all", "All");
         initString("lang.antialiasing", "Anti-Aliasing");
