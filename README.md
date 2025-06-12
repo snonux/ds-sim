@@ -14,46 +14,184 @@ DS-Sim is a modern, open-source simulator for distributed systems, written in Ja
 
 ## Requirements
 
-- Java 17 or higher
+- Java 11 or higher
 - Maven 3.8 or higher
 
-## Building
+### Setting up JAVA_HOME on Fedora Linux
+
+If you encounter "JAVA_HOME environment variable is not defined correctly" errors:
+
+#### Method 1: Automatic Setup (Recommended)
+```bash
+# Find and set JAVA_HOME automatically
+export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
+echo $JAVA_HOME  # Should show something like /usr/lib/jvm/java-21-openjdk
+```
+
+#### Method 2: Manual Setup
+```bash
+# Check available Java versions
+alternatives --display java
+
+# Set JAVA_HOME to the current Java installation
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
+
+# Or for Java 11 if you have it installed
+export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
+```
+
+#### Method 3: Permanent Setup
+To make JAVA_HOME persistent across sessions, add it to your shell profile:
+
+```bash
+# Add to ~/.bashrc or ~/.zshrc
+echo 'export JAVA_HOME=/usr/lib/jvm/java-21-openjdk' >> ~/.bashrc
+source ~/.bashrc
+
+# Verify it's set correctly
+echo $JAVA_HOME
+java -version
+```
+
+#### Install Java Development Kit (if needed)
+```bash
+# Install OpenJDK 21 (recommended)
+sudo dnf install java-21-openjdk-devel
+
+# Or install OpenJDK 11 (minimum requirement)
+sudo dnf install java-11-openjdk-devel
+
+# Install Maven
+sudo dnf install maven
+```
+
+## Quick Start
 
 ```bash
 # Clone the repository
 git clone https://github.com/yourusername/ds-sim.git
 cd ds-sim
 
-# Build the project
-mvn clean package
+# Set JAVA_HOME if needed (Fedora Linux)
+export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
 
-# Run the simulator
-java -jar target/ds-sim-1.0-SNAPSHOT.jar
+# Build and run in one step
+mvn clean package && java -jar target/ds-sim-1.0.1-SNAPSHOT.jar
 ```
 
-## Development
+## Building the Project
+
+### Full Build
+```bash
+# Clean and build everything (recommended)
+mvn clean package
+```
+
+### Development Build
+```bash
+# Fast compilation only
+mvn compile
+
+# Build without running tests (faster)
+mvn package -DskipTests
+```
+
+### Build Output
+After building, you'll find:
+- `target/ds-sim-1.0.1-SNAPSHOT.jar` - Executable JAR with all dependencies
+- `target/classes/` - Compiled class files
+- `target/original-ds-sim-1.0.1-SNAPSHOT.jar` - JAR without dependencies
+
+## Running the Application
+
+### Method 1: Using JAR File (Recommended)
+```bash
+# After building, run the executable JAR
+java -jar target/ds-sim-1.0.1-SNAPSHOT.jar
+```
+
+### Method 2: Direct Maven Execution
+```bash
+# Run without building JAR first
+mvn exec:java
+```
+
+### Method 3: Build and Run Combined
+```bash
+# Build and run in one command
+mvn clean package && java -jar target/ds-sim-1.0.1-SNAPSHOT.jar
+```
+
+## Cleaning the Project
+
+### Remove All Build Artifacts
+```bash
+# Clean everything Maven generated
+mvn clean
+```
+
+### What Gets Cleaned
+The `mvn clean` command removes:
+- `target/` directory and all contents
+- Compiled `.class` files
+- Generated JAR files
+- Test reports
+- Dependency cache
+
+### Force Clean (if needed)
+```bash
+# Remove target directory manually if Maven clean fails
+rm -rf target/
+mvn clean
+```
+
+## Development Workflow
 
 ```bash
-# Run tests
+# 1. Make code changes
+# 2. Quick compile to check for errors
+mvn compile
+
+# 3. Run tests (if any exist)
 mvn test
 
-# Generate documentation
-mvn javadoc:javadoc
+# 4. Build and test the application
+mvn package && java -jar target/ds-sim-1.0.1-SNAPSHOT.jar
+
+# 5. Clean up when done
+mvn clean
 ```
+
+## Maven Command Reference
+
+| Command | Purpose | When to Use |
+|---------|---------|-------------|
+| `mvn compile` | Compile source code only | Quick syntax checking |
+| `mvn test` | Run unit tests | Before committing code |
+| `mvn package` | Create JAR files | Ready to distribute |
+| `mvn clean package` | Full clean build | First build or after major changes |
+| `mvn exec:java` | Run application directly | Quick testing without JAR |
+| `mvn javadoc:javadoc` | Generate documentation | Creating API docs |
+| `mvn clean` | Remove build artifacts | Clean workspace |
+| `mvn package -DskipTests` | Fast build without tests | Development iterations |
 
 ## Project Structure
 
 ```
 ds-sim/
 ├── src/
-│   ├── main/
-│   │   ├── java/        # Source code
-│   │   └── resources/   # Configuration files
-│   └── test/
-│       ├── java/        # Test code
-│       └── resources/   # Test resources
-├── docs/                # Documentation
-└── pom.xml             # Project configuration
+│   └── main/
+│       ├── java/           # Source code
+│       │   ├── core/       # Process and message handling
+│       │   ├── events/     # Event system
+│       │   ├── protocols/  # Distributed algorithms
+│       │   ├── simulator/  # Main simulation engine  
+│       │   └── utils/      # Utilities and helpers
+│       └── resources/      # Configuration files
+├── docs/                   # Documentation
+├── saved-simulations/      # Example simulation files
+├── scripts/               # Development scripts
+└── pom.xml               # Maven configuration
 ```
 
 ## Contributing

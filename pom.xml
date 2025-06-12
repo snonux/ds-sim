@@ -7,7 +7,7 @@
     
     <groupId>org.ds-sim</groupId>
     <artifactId>ds-sim</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.1-SNAPSHOT</version>
     <name>DS-Sim</name>
     <description>Distributed Systems Simulator - A modern Java-based simulator for distributed systems</description>
     
@@ -91,6 +91,15 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <mainClass>simulator.VSMain</mainClass>
+                </configuration>
             </plugin>
         </plugins>
     </build>
