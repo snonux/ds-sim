@@ -755,7 +755,7 @@ public class VSSimulator extends JPanel implements VSSerializable {
         }
 
         JCheckBox logingActiveCheckBox = new JCheckBox(
-            prefs.getString("lang.loging.active"));
+            prefs.getString("lang.logging.active"));
         logingActiveCheckBox.setSelected(true);
         logingActiveCheckBox.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent ce) {
@@ -799,12 +799,12 @@ public class VSSimulator extends JPanel implements VSSerializable {
             toolsPanel.add(filterTextField);
 
             JButton clearButton = new JButton(
-                prefs.getString("lang.loging.clear"));
+                prefs.getString("lang.logging.clear"));
             clearButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent ae) {
                     String command = ae.getActionCommand();
                     if (command.equals(
-                                prefs.getString("lang.loging.clear"))) {
+                                prefs.getString("lang.logging.clear"))) {
                         loging.clear();
                     }
                 }

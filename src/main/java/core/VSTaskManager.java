@@ -441,7 +441,7 @@ public class VSTaskManager implements VSSerializable {
 
         buffer.append(prefs.getString("lang.task.manager"));
         buffer.append(" (");
-        buffer.append(prefs.getString("lang.tasks.fullfilled"));
+        buffer.append(prefs.getString("lang.tasks.fulfilled"));
         buffer.append(": ");
 
         for (VSTask task : fullfilledProgrammedTasks) {
