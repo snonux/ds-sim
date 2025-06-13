@@ -14,7 +14,7 @@ DS-Sim is a modern, open-source simulator for distributed systems, written in Ja
 
 ## Requirements
 
-- Java 11 or higher
+- Java 21 or higher
 - Maven 3.8 or higher
 
 ### Setting up JAVA_HOME on Fedora Linux
@@ -36,8 +36,8 @@ alternatives --display java
 # Set JAVA_HOME to the current Java installation
 export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
 
-# Or for Java 11 if you have it installed
-export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
+# Or for Java 21 if you have it installed
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
 ```
 
 #### Method 3: Permanent Setup
@@ -58,8 +58,8 @@ java -version
 # Install OpenJDK 21 (recommended)
 sudo dnf install java-21-openjdk-devel
 
-# Or install OpenJDK 11 (minimum requirement)
-sudo dnf install java-11-openjdk-devel
+# Or install OpenJDK 17 (if you need older LTS version)
+sudo dnf install java-17-openjdk-devel
 
 # Install Maven
 sudo dnf install maven
