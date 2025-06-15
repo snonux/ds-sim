@@ -4,6 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build and Development Commands
 
+**Prerequisites:**
+```bash
+# Set JAVA_HOME if not already configured
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
+# Or on macOS with Homebrew: export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+# Or on Windows: set JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-21.0.x-hotspot
+```
+
 **Essential Commands:**
 ```bash
 # Full build (recommended)

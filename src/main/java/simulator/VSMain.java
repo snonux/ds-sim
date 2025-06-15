@@ -56,6 +56,10 @@ public class VSMain {
      * @param args the arguments
      */
     public static void main(String[] args) {
+        // Show splash screen
+        VSSplashScreen splash = new VSSplashScreen();
+        splash.showSplash();
+        
         try {
             UIManager.setLookAndFeel(
                 UIManager.getCrossPlatformLookAndFeelClassName());
@@ -65,6 +69,14 @@ public class VSMain {
         javax.swing.JPopupMenu.setDefaultLightWeightPopupEnabled(false);
         VSPrefs prefs = VSDefaultPrefs.init();
         VSRegisteredEvents.init(prefs);
+        
+        // Wait for splash screen to finish before showing main window
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        
         new VSMain(prefs);
     }
 }
