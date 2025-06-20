@@ -228,10 +228,20 @@ ds-sim/
 │       │   └── utils/      # Utilities and helpers
 │       └── resources/      # Configuration files
 ├── docs/                   # Documentation
+│   ├── ARCHITECTURE.md     # System architecture and design
+│   ├── DEVELOPER_GUIDE.md  # Guide for extending DS-Sim
+│   └── TIMESTAMP_EVENTS_GUIDE.md # Timestamp event system
 ├── saved-simulations/      # Example simulation files
 ├── scripts/               # Development scripts
 └── pom.xml               # Maven configuration
 ```
+
+## Documentation
+
+- **[Architecture Guide](docs/ARCHITECTURE.md)** - System design, components, and diagrams
+- **[Developer Guide](docs/DEVELOPER_GUIDE.md)** - How to create new protocols and events
+- **[Timestamp Events Guide](docs/TIMESTAMP_EVENTS_GUIDE.md)** - Using timestamp-triggered events
+- **[CLAUDE.md](CLAUDE.md)** - Build commands and project overview
 
 ## Contributing
 

@@ -1,0 +1,390 @@
+@startuml DS-Sim Core Architecture
+
+!define RECTANGLE class
+
+package "User Interface Layer" {
+    RECTANGLE VSSimulatorFrame {
+        - menuBar: JMenuBar
+        - simulator: VSSimulator
+        + createSimulator()
+        + showAboutDialog()
+    }
+    
+    RECTANGLE VSSimulator {
+        - simulatorVisualization: VSSimulatorVisualization
+        - taskManager: VSTaskManager
+        - logingArea: JTextArea
+        + reset()
+        + play()
+        + pause()
+    }
+    
+    RECTANGLE VSSimulatorVisualization {
+        - processes: List<VSInternalProcess>
+        - globalTime: long
+        - isPaused: boolean
+        + paintComponent(Graphics)
+        + run()
+        + addProcess()
+    }
+}
+
+package "Event System" {
+    abstract RECTANGLE VSAbstractEvent {
+        # process: VSAbstractProcess
+        # prefs: VSPrefs
+        + {abstract} onInit()
+        + {abstract} onStart()
+        + isInternalEvent(): boolean
+        + shouldIncreaseTimestamps(): boolean
+        + getEventPriority(): int
+    }
+    
+    RECTANGLE VSTask {
+        - time: long
+        - process: VSAbstractProcess
+        - event: VSAbstractEvent
+        - timeType: int
+        + run()
+        + compareTo(VSTask): int
+    }
+    
+    RECTANGLE VSTaskManager {
+        - tasks: VSPriorityQueue<VSTask>
+        - simulatorVisualization: VSSimulatorVisualization
+        + addTask(VSTask)
+        + runTasks(long)
+        + removeAllTasks()
+    }
+    
+    RECTANGLE VSRegisteredEvents {
+        {static} - eventClassnamesByNames: Map
+        {static} - eventShortnamesByClassnames: Map
+        {static} + init(VSPrefs)
+        {static} + registerEvent(String)
+        {static} + createEventInstance(String)
+    }
+}
+
+package "Core Process" {
+    abstract RECTANGLE VSAbstractProcess {
+        # processNum: int
+        # localTime: long
+        # globalTime: long
+        # lamportTime: long
+        # vectorTime: VSVectorTime
+        + increaseTime()
+        + increaseLamportTime()
+        + increaseVectorTime()
+        + sendMessage(VSMessage)
+    }
+    
+    RECTANGLE VSInternalProcess {
+        - clockVariance: float
+        - clockOffset: double
+        - vectorClockMonitor: VSVectorClockMonitor
+        - crashed: boolean
+        + syncTime(long)
+        + crash()
+        + recover()
+        + highlightOn()
+    }
+    
+    RECTANGLE VSMessage {
+        - senderNum: int
+        - receiverNum: int
+        - protocolClassname: String
+        - lamportTime: VSLamportTime
+        - vectorTime: VSVectorTime
+        + getName(): String
+        + isServerMessage(): boolean
+    }
+}
+
+package "Protocol Framework" {
+    abstract RECTANGLE VSAbstractProtocol {
+        - isServer: boolean
+        - isClient: boolean
+        - hasOnServerStart: boolean
+        + {abstract} onServerInit()
+        + {abstract} onClientInit()
+        + {abstract} onServerRecv(VSMessage)
+        + {abstract} onClientRecv(VSMessage)
+        + sendMessage(VSMessage)
+        + scheduleAt(long)
+    }
+    
+    RECTANGLE VSPingPongProtocol {
+        + onServerInit()
+        + onServerRecv(VSMessage)
+        + onClientInit()
+        + onClientRecv(VSMessage)
+    }
+    
+    RECTANGLE VSTwoPhaseCommitProtocol {
+        - phase: Phase
+        - votes: Map<Integer, Boolean>
+        + onServerInit()
+        + onServerRecv(VSMessage)
+        + onClientInit()
+        + onClientRecv(VSMessage)
+    }
+}
+
+package "Time Management" {
+    interface VSTime {
+        + getGlobalTime(): long
+        + toString(): String
+    }
+    
+    RECTANGLE VSLamportTime {
+        - lamportTime: long
+        - globalTime: long
+        + increase()
+        + update(VSLamportTime)
+    }
+    
+    RECTANGLE VSVectorTime {
+        - vector: long[]
+        - globalTime: long
+        + increase(int)
+        + update(VSVectorTime)
+        + getCopy(): VSVectorTime
+    }
+}
+
+' Relationships
+VSSimulatorFrame --> VSSimulator
+VSSimulator --> VSSimulatorVisualization
+VSSimulator --> VSTaskManager
+VSSimulatorVisualization --> VSInternalProcess
+VSTaskManager --> VSTask
+VSTask --> VSAbstractEvent
+VSInternalProcess --|> VSAbstractProcess
+VSAbstractProtocol --|> VSAbstractEvent
+VSPingPongProtocol --|> VSAbstractProtocol
+VSTwoPhaseCommitProtocol --|> VSAbstractProtocol
+VSLamportTime ..|> VSTime
+VSVectorTime ..|> VSTime
+VSInternalProcess --> VSMessage
+VSAbstractProtocol --> VSMessage
+
+@enduml
+
+@startuml Event Processing Sequence
+
+participant "VSSimulatorVisualization" as Viz
+participant "VSTaskManager" as TM
+participant "VSTask" as Task
+participant "VSAbstractEvent" as Event
+participant "VSInternalProcess" as Process
+
+activate Viz
+
+loop Simulation Loop
+    Viz -> Viz: Thread.sleep(timestep)
+    Viz -> Process: syncTime(globalTime)
+    activate Process
+    Process -> Process: Update local time with drift
+    deactivate Process
+    
+    Viz -> TM: runTasks(globalTime)
+    activate TM
+    
+    loop For each ready task
+        TM -> Task: time <= currentTime?
+        activate Task
+        
+        alt Task is ready
+            Task -> Event: onStart()
+            activate Event
+            
+            alt Event increases timestamps
+                Event -> Process: increaseLamportTime()
+                Event -> Process: increaseVectorTime()
+            end
+            
+            Event -> Event: Execute event logic
+            Event -> TM: May schedule new tasks
+            
+            deactivate Event
+        end
+        
+        deactivate Task
+    end
+    
+    deactivate TM
+end
+
+deactivate Viz
+
+@enduml
+
+@startuml Protocol Message Flow
+
+participant "Client Process" as Client
+participant "Client Protocol" as CP
+participant "Network Simulation" as Net
+participant "Server Protocol" as SP
+participant "Server Process" as Server
+
+activate Client
+Client -> CP: Protocol action triggered
+activate CP
+
+CP -> CP: onClientStart()
+CP -> Client: increaseLamportTime()
+CP -> Client: increaseVectorTime()
+CP -> Net: sendMessage(request)
+
+deactivate CP
+deactivate Client
+
+activate Net
+Net -> Net: Calculate network delay
+Net -> Net: Schedule receive task
+Net -> SP: onMessageRecvStart(request)
+deactivate Net
+
+activate SP
+activate Server
+
+SP -> SP: isRelevantMessage()?
+SP -> SP: onServerRecv(request)
+SP -> Server: Process request
+SP -> Server: increaseLamportTime()
+SP -> Server: increaseVectorTime()
+SP -> Net: sendMessage(response)
+
+deactivate SP
+deactivate Server
+
+activate Net
+Net -> Net: Calculate network delay
+Net -> Net: Schedule receive task
+Net -> CP: onMessageRecvStart(response)
+deactivate Net
+
+activate CP
+activate Client
+
+CP -> CP: onClientRecv(response)
+CP -> Client: Update timestamps from message
+CP -> Client: Process response
+
+deactivate CP
+deactivate Client
+
+@enduml
+
+@startuml Timestamp Triggered Events
+
+class VSTimestampTriggeredEvent {
+    # timestampType: TimestampType
+    # operator: ComparisonOperator
+    # hasTriggered: boolean
+    # targetLamportTime: long
+    # targetVectorTime: VSVectorTime
+    + checkCondition(VSInternalProcess): boolean
+    + {abstract} onTimestampReached()
+}
+
+class VSLamportTimestampEvent {
+    - actionDescription: String
+    - customAction: Runnable
+    + onTimestampReached()
+}
+
+class VSVectorTimestampEvent {
+    - processIndex: int
+    - actionDescription: String
+    + onTimestampReached()
+}
+
+class VSTimestampMonitorEvent {
+    - lamportEvents: List<VSLamportTimestampEvent>
+    - vectorEvents: List<VSVectorTimestampEvent>
+    + addLamportEvent(event)
+    + addVectorEvent(event)
+    + onStart()
+}
+
+class VSVectorClockMonitor {
+    - process: VSInternalProcess
+    - vectorEvents: List<VSVectorTimestampEvent>
+    + registerVectorEvent(event)
+    + checkVectorEvents()
+}
+
+VSTimestampTriggeredEvent <|-- VSLamportTimestampEvent
+VSTimestampTriggeredEvent <|-- VSVectorTimestampEvent
+VSAbstractEvent <|-- VSTimestampTriggeredEvent
+VSAbstractEvent <|-- VSTimestampMonitorEvent
+VSInternalProcess --> VSVectorClockMonitor
+VSVectorClockMonitor --> VSVectorTimestampEvent
+
+note top of VSTimestampTriggeredEvent
+    Triggers when timestamp conditions are met:
+    - EQUAL: timestamp == target
+    - GREATER_THAN: timestamp > target
+    - LESS_THAN: timestamp < target
+    - GREATER_EQUAL: timestamp >= target
+    - LESS_EQUAL: timestamp <= target
+end note
+
+@enduml
+
+@startuml Task Scheduling and Execution
+
+participant "User Action" as User
+participant "VSAbstractProtocol" as Protocol
+participant "VSTaskManager" as TM
+participant "VSPriorityQueue" as Queue
+participant "VSTask" as Task
+
+activate User
+User -> Protocol: scheduleAt(time)
+activate Protocol
+
+Protocol -> Protocol: Create VSProtocolScheduleEvent
+Protocol -> Task: new VSTask(time, process, event)
+activate Task
+
+Protocol -> TM: addTask(task)
+activate TM
+
+TM -> Queue: add(task)
+activate Queue
+Queue -> Queue: Sort by time
+deactivate Queue
+
+deactivate TM
+deactivate Task
+deactivate Protocol
+deactivate User
+
+... Time passes ...
+
+activate TM
+TM -> TM: runTasks(currentTime)
+TM -> Queue: peek()
+activate Queue
+
+loop While task.time <= currentTime
+    Queue -> Task: remove()
+    Task -> Task: run()
+    activate Task
+    
+    Task -> Protocol: onServerSchedule() or onClientSchedule()
+    activate Protocol
+    Protocol -> Protocol: Execute scheduled logic
+    Protocol -> TM: May schedule more tasks
+    deactivate Protocol
+    
+    deactivate Task
+end
+
+deactivate Queue
+deactivate TM
+
+@enduml
