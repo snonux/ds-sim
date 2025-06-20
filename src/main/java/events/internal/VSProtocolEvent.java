@@ -27,6 +27,16 @@ public class VSProtocolEvent extends VSAbstractInternalEvent
 
     /** The event is a client protocol if true. Else it is a server protocol */
     private boolean isClientProtocol;
+    
+    @Override
+    public boolean isProtocolEvent() {
+        return true;
+    }
+    
+    @Override
+    public int getEventPriority() {
+        return PRIORITY_MEDIUM;
+    }
 
     /** The event is a protocol activation if true. Else it is a deactivation */
     private boolean isProtocolActivation;

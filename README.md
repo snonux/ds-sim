@@ -96,6 +96,45 @@ mvn compile
 mvn package -DskipTests
 ```
 
+## Running Tests
+
+The project includes comprehensive unit tests for core components.
+
+### Run All Tests
+```bash
+# Run the complete test suite
+mvn test
+```
+
+### Run Specific Test Classes
+```bash
+# Run tests for a specific class
+mvn test -Dtest=VSTaskTest
+
+# Run tests matching a pattern
+mvn test -Dtest=VS*Test
+
+# Run tests in a specific package
+mvn test -Dtest=core.*
+```
+
+### Test Coverage
+The test suite includes:
+- **Core components**: VSTask, VSMessage (45 tests)
+- **Event system**: VSAbstractEvent, VSRegisteredEvents, event implementations (55 tests)
+- **Protocol framework**: VSAbstractProtocol, VSPingPongProtocol (32 tests)
+
+Total: **132 unit tests** covering critical functionality
+
+### View Test Results
+```bash
+# Test reports are generated in:
+target/surefire-reports/
+
+# View summary of last test run
+cat target/surefire-reports/*.txt
+```
+
 ### Build Output
 After building, you'll find:
 - `target/ds-sim-1.0.1-SNAPSHOT.jar` - Executable JAR with all dependencies
@@ -152,7 +191,7 @@ mvn clean
 # 2. Quick compile to check for errors
 mvn compile
 
-# 3. Run tests (if any exist)
+# 3. Run tests
 mvn test
 
 # 4. Build and test the application

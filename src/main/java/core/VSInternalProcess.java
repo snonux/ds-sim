@@ -155,7 +155,7 @@ public class VSInternalProcess extends VSAbstractProcess {
      * @return A random percentage 0..100.
      */
     public synchronized int getRandomPercentage() {
-        return random.nextInt() % 101;
+        return random.nextInt() % constants.VSConstants.PERCENTAGE_RANGE;
     }
 
     /**

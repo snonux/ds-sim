@@ -12,6 +12,17 @@ import simulator.VSMain;
  */
 public class VSProcessRecoverEvent extends VSAbstractEvent
     implements VSCopyableEvent {
+    
+    @Override
+    public boolean isProcessRecoverEvent() {
+        return true;
+    }
+    
+    @Override
+    public int getEventPriority() {
+        return PRIORITY_HIGHEST;
+    }
+    
     /* (non-Javadoc)
      * @see events.VSCopyableEvent#initCopy(events.VSAbstractEvent)
      */

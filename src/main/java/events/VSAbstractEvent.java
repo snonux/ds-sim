@@ -19,6 +19,16 @@ import serialize.VSSerialize;
  * @author Paul C. Buetow
  */
 abstract public class VSAbstractEvent extends VSSerializablePrefs {
+    /** Event priority constants for task ordering */
+    public static final int PRIORITY_HIGHEST = -3;  // Process recover events
+    public static final int PRIORITY_HIGH = -2;     // Process crash events  
+    public static final int PRIORITY_MEDIUM = -1;   // Protocol events
+    public static final int PRIORITY_NORMAL = 0;    // All other events
+    
+    /** Class name prefix used by Java reflection */
+    private static final String CLASS_PREFIX = "class ";
+    private static final int CLASS_PREFIX_LENGTH = 6;
+    
     /** The prefs. */
     public VSPrefs prefs;
 
@@ -32,6 +42,88 @@ abstract public class VSAbstractEvent extends VSSerializablePrefs {
     private String eventClassname;
 
     /**
+     * Check if this event is an internal event.
+     * 
+     * @return true if this is an internal event
+     */
+    public boolean isInternalEvent() {
+        return false;
+    }
+    
+    /**
+     * Check if this event is serializable.
+     * 
+     * @return true if this event is serializable
+     */
+    public boolean isSerializable() {
+        return true;
+    }
+    
+    /**
+     * Check if this event is a message receive event.
+     * 
+     * @return true if this is a message receive event
+     */
+    public boolean isMessageReceiveEvent() {
+        return false;
+    }
+    
+    /**
+     * Check if this event is a process recover event.
+     * 
+     * @return true if this is a process recover event
+     */
+    public boolean isProcessRecoverEvent() {
+        return false;
+    }
+    
+    /**
+     * Check if this event is a process crash event.
+     * 
+     * @return true if this is a process crash event
+     */
+    public boolean isProcessCrashEvent() {
+        return false;
+    }
+    
+    /**
+     * Check if this event is a protocol event.
+     * 
+     * @return true if this is a protocol event
+     */
+    public boolean isProtocolEvent() {
+        return false;
+    }
+    
+    /**
+     * Check if this event should trigger timestamp increases when executed.
+     * 
+     * @return true if timestamps should be increased
+     */
+    public boolean shouldIncreaseTimestamps() {
+        return true;
+    }
+    
+    /**
+     * Get the priority of this event for ordering in VSTask comparisons.
+     * Lower values have higher priority.
+     * 
+     * @return the event priority
+     */
+    public int getEventPriority() {
+        return PRIORITY_NORMAL;
+    }
+    
+    /**
+     * Check if this event is copyable.
+     * 
+     * @return true if this event can be copied
+     */
+    public boolean isCopyable() {
+        return this instanceof VSCopyableEvent;
+    }
+
+    /**
      * Creates a copy of the event and using a new process.
      *
      * @param theProcess The new process
@@ -43,7 +135,7 @@ abstract public class VSAbstractEvent extends VSSerializablePrefs {
         if (theProcess == null)
             theProcess = (VSInternalProcess) process;
 
-        if (!(this instanceof VSCopyableEvent))
+        if (!isCopyable())
             throw new VSEventNotCopyableException(
                 eventShortname + " (" + eventClassname + ")");
 
@@ -93,8 +185,8 @@ abstract public class VSAbstractEvent extends VSSerializablePrefs {
      * @param eventClassname the new classname
      */
     public final void setClassname(String eventClassname) {
-        if (eventClassname.startsWith("class "))
-            eventClassname = eventClassname.substring(6);
+        if (eventClassname.startsWith(CLASS_PREFIX))
+            eventClassname = eventClassname.substring(CLASS_PREFIX_LENGTH);
 
         this.eventClassname = eventClassname;
     }

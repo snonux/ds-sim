@@ -24,6 +24,21 @@ public class VSMessageReceiveEvent extends VSAbstractInternalEvent
     public VSMessageReceiveEvent(VSMessage message) {
         this.message = message;
     }
+    
+    @Override
+    public boolean isMessageReceiveEvent() {
+        return true;
+    }
+    
+    @Override
+    public boolean isSerializable() {
+        return false;
+    }
+    
+    @Override
+    public boolean shouldIncreaseTimestamps() {
+        return false;
+    }
 
     /* (non-Javadoc)
      * @see events.VSAbstractEvent#onInit()

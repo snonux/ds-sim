@@ -14,6 +14,11 @@ import serialize.VSSerialize;
  * @author Paul C. Buetow
  */
 abstract public class VSAbstractInternalEvent extends VSAbstractEvent {
+    @Override
+    public boolean isInternalEvent() {
+        return true;
+    }
+    
     /* (non-Javadoc)
      * @see events.VSAbstractEvent#createShortname()()
      */

@@ -6,11 +6,6 @@ import java.io.ObjectOutputStream;
 
 import events.VSAbstractEvent;
 import events.VSRegisteredEvents;
-import events.implementations.VSProcessCrashEvent;
-import events.implementations.VSProcessRecoverEvent;
-import events.internal.VSAbstractInternalEvent;
-import events.internal.VSMessageReceiveEvent;
-import events.internal.VSProtocolEvent;
 import exceptions.VSEventNotCopyableException;
 import prefs.VSPrefs;
 import protocols.VSAbstractProtocol;
@@ -165,7 +160,7 @@ public class VSTask implements Comparable<Object>, VSSerializable {
      * @return true, if the task is using an internal event
      */
     public boolean hasInternalEvent() {
-        return event instanceof VSAbstractInternalEvent;
+        return event.isInternalEvent();
     }
 
     /**
@@ -174,7 +169,7 @@ public class VSTask implements Comparable<Object>, VSSerializable {
      * @return true, if the task should not get serialized
      */
     public boolean hasNotSerializableEvent() {
-        return event instanceof VSNotSerializable;
+        return !event.isSerializable();
     }
 
     /**
@@ -183,7 +178,7 @@ public class VSTask implements Comparable<Object>, VSSerializable {
      * @return true, if it is a message receive event
      */
     public boolean hasMessageReceiveEvent() {
-        return event instanceof VSMessageReceiveEvent;
+        return event.isMessageReceiveEvent();
     }
 
     /**
@@ -192,7 +187,7 @@ public class VSTask implements Comparable<Object>, VSSerializable {
      * @return true, if it is a process recover event
      */
     public boolean hasProcessRecoverEvent() {
-        return event instanceof VSProcessRecoverEvent;
+        return event.isProcessRecoverEvent();
     }
 
     /**
@@ -268,8 +263,7 @@ public class VSTask implements Comparable<Object>, VSSerializable {
         if (event.getProcess() == null)
             event.init(process);
 
-        if (!(event instanceof VSMessageReceiveEvent)
-                && !(event instanceof VSAbstractProtocol))
+        if (event.shouldIncreaseTimestamps())
             process.increaseVectorAndLamportTimeIfAll();
 
         event.onStart();
@@ -370,44 +364,10 @@ public class VSTask implements Comparable<Object>, VSSerializable {
 
             VSAbstractEvent event2 = task.getEvent();
 
-            /* If it's a recovering, it should get handled very first */
-            boolean a = event instanceof VSProcessRecoverEvent;
-            boolean b = event2 instanceof VSProcessRecoverEvent;
-
-            if (a && b)
-                return 0;
-
-            if (a)
-                return -1;
-
-            if (b)
-                return 1;
-
-            /* If it's a crash, it should get handled second first */
-            a = event instanceof VSProcessCrashEvent;
-            b = event2 instanceof VSProcessCrashEvent;
-
-            if (a && b)
-                return 0;
-
-            if (a)
-                return -1;
-
-            if (b)
-                return 1;
-
-            /* If it's a VSProtocolEvent, it should get handled third  */
-            a = event instanceof VSProtocolEvent;
-            b = event2 instanceof VSProtocolEvent;
-
-            if (a && b)
-                return 0;
-
-            if (a)
-                return -1;
-
-            if (b)
-                return 1;
+            /* Use priority-based comparison for event ordering */
+            int priorityDiff = event.getEventPriority() - event2.getEventPriority();
+            if (priorityDiff != 0)
+                return priorityDiff;
 
             String shortname = event.getShortname();
             String shortname2 = event2.getShortname();

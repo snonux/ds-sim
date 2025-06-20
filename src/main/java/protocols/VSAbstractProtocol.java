@@ -26,6 +26,11 @@ abstract public class VSAbstractProtocol extends VSAbstractEvent {
 
     /** The protocol has an onClientStart method */
     protected static final boolean HAS_ON_CLIENT_START = false;
+    
+    @Override
+    public boolean shouldIncreaseTimestamps() {
+        return false;
+    }
 
     /** True, if onServerStart is used, false if onClientStart is used */
     private boolean hasOnServerStart;

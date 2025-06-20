@@ -153,6 +153,10 @@ class VSTaskTest {
         VSAbstractEvent normalEvent = mock(VSAbstractEvent.class);
         VSMessageReceiveEvent internalEvent = mock(VSMessageReceiveEvent.class);
         
+        // Setup mocks to return correct values
+        when(normalEvent.isInternalEvent()).thenReturn(false);
+        when(internalEvent.isInternalEvent()).thenReturn(true);
+        
         // When/Then
         task = new VSTask(1000L, mockProcess, normalEvent, VSTask.LOCAL);
         assertFalse(task.hasInternalEvent());
@@ -166,6 +170,7 @@ class VSTaskTest {
     void testHasMessageReceiveEvent() {
         // Given
         VSMessageReceiveEvent messageEvent = mock(VSMessageReceiveEvent.class);
+        when(messageEvent.isMessageReceiveEvent()).thenReturn(true);
         
         // When
         task = new VSTask(1000L, mockProcess, messageEvent, VSTask.LOCAL);
@@ -179,6 +184,7 @@ class VSTaskTest {
     void testHasProcessRecoverEvent() {
         // Given
         VSProcessRecoverEvent recoverEvent = mock(VSProcessRecoverEvent.class);
+        when(recoverEvent.isProcessRecoverEvent()).thenReturn(true);
         
         // When
         task = new VSTask(1000L, mockProcess, recoverEvent, VSTask.LOCAL);
@@ -266,6 +272,7 @@ class VSTaskTest {
         // Given
         task = new VSTask(1000L, mockProcess, mockEvent, VSTask.LOCAL);
         when(mockEvent.getProcess()).thenReturn(null);
+        when(mockEvent.shouldIncreaseTimestamps()).thenReturn(true);
         
         // When
         task.run();
@@ -283,6 +290,7 @@ class VSTaskTest {
         VSMessageReceiveEvent messageEvent = mock(VSMessageReceiveEvent.class);
         task = new VSTask(1000L, mockProcess, messageEvent, VSTask.LOCAL);
         when(messageEvent.getProcess()).thenReturn(mockProcess);
+        when(messageEvent.shouldIncreaseTimestamps()).thenReturn(false);
         
         // When
         task.run();
@@ -298,6 +306,7 @@ class VSTaskTest {
         // Given
         task = new VSTask(1000L, mockProcess, mockProtocol, VSTask.LOCAL);
         when(mockProtocol.getProcess()).thenReturn(mockProcess);
+        when(mockProtocol.shouldIncreaseTimestamps()).thenReturn(false);
         
         // When
         task.run();
@@ -412,6 +421,8 @@ class VSTaskTest {
     void testCompareToProcessRecoverEventPriority() {
         // Given
         VSProcessRecoverEvent recoverEvent = mock(VSProcessRecoverEvent.class);
+        when(recoverEvent.getEventPriority()).thenReturn(-3); // Highest priority
+        when(mockEvent.getEventPriority()).thenReturn(0); // Normal priority
         VSTask recoverTask = new VSTask(1000L, mockProcess, recoverEvent, VSTask.LOCAL);
         VSTask normalTask = new VSTask(1000L, mockProcess, mockEvent, VSTask.LOCAL);
         
@@ -425,6 +436,8 @@ class VSTaskTest {
     void testCompareToProcessCrashEventPriority() {
         // Given
         VSProcessCrashEvent crashEvent = mock(VSProcessCrashEvent.class);
+        when(crashEvent.getEventPriority()).thenReturn(-2); // Second highest priority
+        when(mockEvent.getEventPriority()).thenReturn(0); // Normal priority
         VSTask crashTask = new VSTask(1000L, mockProcess, crashEvent, VSTask.LOCAL);
         VSTask normalTask = new VSTask(1000L, mockProcess, mockEvent, VSTask.LOCAL);
         
@@ -438,6 +451,8 @@ class VSTaskTest {
     void testCompareToProtocolEventPriority() {
         // Given
         VSProtocolEvent protocolEvent = mock(VSProtocolEvent.class);
+        when(protocolEvent.getEventPriority()).thenReturn(-1); // Third highest priority
+        when(mockEvent.getEventPriority()).thenReturn(0); // Normal priority
         VSTask protocolTask = new VSTask(1000L, mockProcess, protocolEvent, VSTask.LOCAL);
         VSTask normalTask = new VSTask(1000L, mockProcess, mockEvent, VSTask.LOCAL);
         

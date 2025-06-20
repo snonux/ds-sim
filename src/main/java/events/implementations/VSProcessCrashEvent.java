@@ -11,6 +11,17 @@ import simulator.VSMain;
  */
 public class VSProcessCrashEvent extends VSAbstractEvent
     implements VSCopyableEvent {
+    
+    @Override
+    public boolean isProcessCrashEvent() {
+        return true;
+    }
+    
+    @Override
+    public int getEventPriority() {
+        return PRIORITY_HIGH;
+    }
+    
     /* (non-Javadoc)
      * @see events.VSCopyableEvent#initCopy(events.VSAbstractEvent)
      */
