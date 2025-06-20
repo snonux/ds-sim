@@ -2,6 +2,7 @@ package prefs;
 
 import java.awt.Color;
 import java.awt.event.KeyEvent;
+import utils.VSVersionInfo;
 
 /**
  * The class VSDefaultPrefs, makes sure that the simulator has its default
@@ -81,7 +82,7 @@ public class VSDefaultPrefs extends VSSerializablePrefs {
         initString("lang.message.recv", "Message received");
         initString("lang.message.sent", "Message sent");
         initString("lang.mode.expert", "Expert mode");
-        initString("lang.name", "Distributed Systems Simulator 1.2-beta");
+        initString("lang.name", VSVersionInfo.getFullVersionString());
         initString("lang.ok", "OK");
         initString("lang.open", "Open");
         initString("lang.pause", "Pause");
