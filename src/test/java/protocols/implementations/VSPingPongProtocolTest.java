@@ -2,6 +2,7 @@ package protocols.implementations;
 
 import core.VSInternalProcess;
 import core.VSMessage;
+import core.time.VSVectorTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -29,6 +30,9 @@ class VSPingPongProtocolTest {
     @Mock
     private VSPrefs mockPrefs;
     
+    @Mock
+    private VSVectorTime mockVectorTime;
+    
     private VSPingPongProtocol protocol;
     
     @BeforeEach
@@ -41,6 +45,10 @@ class VSPingPongProtocolTest {
         // Setup mock chain
         when(mockProcess.getSimulatorCanvas()).thenReturn(mockCanvas);
         when(mockPrefs.getString(anyString())).thenReturn("TestString");
+        
+        // Setup vector time mock
+        when(mockProcess.getVectorTime()).thenReturn(mockVectorTime);
+        when(mockVectorTime.getCopy()).thenReturn(mockVectorTime);
     }
     
     @Test
