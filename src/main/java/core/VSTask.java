@@ -257,7 +257,12 @@ public class VSTask implements Comparable<Object>, VSSerializable {
     }
 
     /**
-     * Runs the task.
+     * Executes this task by running its associated event.
+     * This method is called by the task manager when the task's scheduled time arrives.
+     * If the event requires it, this will also increase the process's timestamps.
+     * 
+     * @see VSAbstractEvent#onStart()
+     * @see VSAbstractEvent#shouldIncreaseTimestamps()
      */
     public void run() {
         if (event.getProcess() == null)
@@ -279,18 +284,22 @@ public class VSTask implements Comparable<Object>, VSSerializable {
     }
 
     /**
-     * Sets the task time.
+     * Sets the scheduled execution time for this task.
+     * For global-timed tasks, this is in global simulation time units.
+     * For local-timed tasks, this is in the process's local time units.
      *
-     * @param taskTime the task time
+     * @param taskTime the time when this task should execute
      */
     public void setTaskTime(long taskTime) {
         this.taskTime = taskTime;
     }
 
     /**
-     * Sets the process.
+     * Sets the process that owns this task.
+     * This method only updates the process if it differs from the current one.
+     * It also updates the event's process reference.
      *
-     * @param process the process
+     * @param process the process that will own and execute this task
      */
     public void setProcess(VSInternalProcess process) {
         /* Only do it if the process differs */

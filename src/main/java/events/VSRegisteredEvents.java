@@ -11,11 +11,23 @@ import prefs.VSPrefs;
 import utils.VSClassLoader;
 
 /**
- * The class VSRegisteredEvents. This class is responsible to manage all
- * events. It manages the event classnames, the event shortnames and the event
- * names. It also checks if a protocol (which is an event as well) has
- * variables which are editable through the GUI of the simulator.
- *
+ * Registry and manager for all available events and protocols in the simulator.
+ * This class provides a centralized location for:
+ * <ul>
+ *   <li>Registering event and protocol implementations</li>
+ *   <li>Mapping between class names, short names, and display names</li>
+ *   <li>Identifying which protocols have editable parameters</li>
+ *   <li>Managing client/server variable metadata for protocols</li>
+ * </ul>
+ * 
+ * <p>All events and protocols must be registered in {@link #init(VSPrefs)}
+ * to be available in the simulator. The registry uses reflection to discover
+ * protocol properties and determine which ones expose editable parameters.</p>
+ * 
+ * <p>This is a static utility class and cannot be instantiated.</p>
+ * 
+ * @see VSAbstractEvent
+ * @see protocols.VSAbstractProtocol
  * @author Paul C. Buetow
  */
 public final class VSRegisteredEvents {
@@ -52,9 +64,21 @@ public final class VSRegisteredEvents {
     private static VSPrefs prefs;
 
     /**
-     * Registers available events.
+     * Initializes the event registry with all available events and protocols.
+     * This method must be called before any events or protocols can be used.
+     * 
+     * <p>The initialization process:</p>
+     * <ol>
+     *   <li>Registers all built-in events (crashes, recoveries, timestamps)</li>
+     *   <li>Registers all protocol implementations</li>
+     *   <li>Uses reflection to discover editable protocol parameters</li>
+     *   <li>Builds metadata for protocol client/server variables</li>
+     * </ol>
+     * 
+     * <p>To add a new event or protocol, add a registerEvent() call here
+     * with the fully qualified class name.</p>
      *
-     * @param prefs_ the prefs_
+     * @param prefs_ the preferences object for the simulator
      */
     public static void init(VSPrefs prefs_) {
         prefs = prefs_;

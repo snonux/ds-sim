@@ -14,7 +14,21 @@ import serialize.VSSerialize;
 /**
  * Abstract base class for timestamp-triggered events that fire when specific
  * Lamport or vector clock conditions are met.
- *
+ * 
+ * <p>This class provides the foundation for creating events that trigger based on
+ * timestamp conditions. Subclasses can define events that fire when:</p>
+ * <ul>
+ *   <li>Lamport time reaches a specific value</li>
+ *   <li>Vector clock matches certain conditions</li>
+ *   <li>Custom timestamp comparisons are satisfied</li>
+ * </ul>
+ * 
+ * <p>Events can use various comparison operators (equal, greater than, less than, etc.)
+ * and will only trigger once when their condition is first met.</p>
+ * 
+ * @see VSLamportTimestampEvent
+ * @see VSVectorTimestampEvent
+ * @see VSTimestampMonitorEvent
  * @author Paul C. Buetow
  */
 public abstract class VSTimestampTriggeredEvent extends VSAbstractEvent implements VSCopyableEvent {

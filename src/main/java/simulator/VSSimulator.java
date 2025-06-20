@@ -55,10 +55,23 @@ import serialize.VSSerializable;
 import serialize.VSSerialize;
 
 /**
- * The class VSSimulator, an object of this class represents a whole simulator.
- * It may be, that several parallel simulators exist. They are independent
- * fron each other.
- *
+ * Main simulator control panel and coordinator for the distributed systems simulator.
+ * This class manages the simulation UI and coordinates between various components:
+ * <ul>
+ *   <li>Process management and visualization</li>
+ *   <li>Task scheduling and execution</li>
+ *   <li>Event and protocol management</li>
+ *   <li>Logging and filtering</li>
+ *   <li>Simulation control (play, pause, reset)</li>
+ * </ul>
+ * 
+ * <p>The simulator provides both a graphical interface for controlling the
+ * simulation and programmatic access to simulation state. Multiple independent
+ * simulators can exist in parallel without interfering with each other.</p>
+ * 
+ * @see VSSimulatorVisualization
+ * @see VSTaskManager
+ * @see VSInternalProcess
  * @author Paul C. Buetow
  */
 public class VSSimulator extends JPanel implements VSSerializable {

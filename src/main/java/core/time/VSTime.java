@@ -1,22 +1,31 @@
 package core.time;
 
 /**
- * This interface is a guidline for general time format classes.
+ * Interface for time representations in the distributed simulator.
+ * This interface provides a common contract for different time implementations
+ * including Lamport logical time and vector clocks.
+ * 
+ * <p>All time implementations must track the global simulation time
+ * and provide a string representation for display purposes.</p>
  *
+ * @see VSLamportTime
+ * @see VSVectorTime
  * @author Paul C. Buetow
  */
 public interface VSTime {
     /**
-     * Gets the global time.
+     * Gets the global simulation time when this time value was recorded.
+     * This allows correlation between logical time and simulation time.
      *
-     * @return The global time
+     * @return the global simulation time in milliseconds
      */
     public long getGlobalTime();
 
     /**
-     * Returns a string representation.
+     * Returns a string representation of this time value.
+     * The format depends on the specific time implementation.
      *
-     * @return The representation of the implementing object as a string
+     * @return string representation suitable for display or logging
      */
     public String toString();
 }

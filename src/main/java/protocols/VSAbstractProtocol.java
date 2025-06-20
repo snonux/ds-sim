@@ -27,6 +27,12 @@ abstract public class VSAbstractProtocol extends VSAbstractEvent {
     /** The protocol has an onClientStart method */
     protected static final boolean HAS_ON_CLIENT_START = false;
     
+    /**
+     * Protocols do not increase timestamps when executed.
+     * Only regular events and messages increase timestamps.
+     * 
+     * @return always false for protocol events
+     */
     @Override
     public boolean shouldIncreaseTimestamps() {
         return false;
@@ -67,9 +73,18 @@ abstract public class VSAbstractProtocol extends VSAbstractEvent {
     }
 
     /**
-     * Sends a message.
+     * Sends a message from this protocol to other processes.
+     * This method automatically:
+     * <ul>
+     *   <li>Increases the process's Lamport and vector timestamps</li>
+     *   <li>Wraps the message in a {@link VSMessageStub}</li>
+     *   <li>Marks the message as server or client based on current context</li>
+     *   <li>Delegates to the process for actual transmission</li>
+     * </ul>
      *
      * @param message the message to send
+     * @see VSMessageStub
+     * @see VSInternalProcess#sendMessage(VSMessage)
      */
     public void sendMessage(VSMessage message) {
         if (process == null)
@@ -161,9 +176,17 @@ abstract public class VSAbstractProtocol extends VSAbstractEvent {
     }
 
     /**
-     * On message recv.
+     * Handles incoming message reception for this protocol.
+     * This method:
+     * <ul>
+     *   <li>Filters out messages for other protocols</li>
+     *   <li>Ensures server/client initialization</li>
+     *   <li>Delegates to onServerRecv() or onClientRecv() based on context</li>
+     * </ul>
      *
-     * @param message the message
+     * @param message the received message
+     * @see #onServerRecv(VSMessage)
+     * @see #onClientRecv(VSMessage)
      */
     public final void onMessageRecvStart(VSMessage message) {
         if (isIncorrectProtocol(message))
@@ -185,14 +208,19 @@ abstract public class VSAbstractProtocol extends VSAbstractEvent {
     }
 
     /**
-     * Check's if its a relevant message.
+     * Checks if a message is relevant for this protocol instance.
+     * A message is relevant if:
+     * <ul>
+     *   <li>It belongs to this protocol (same class name)</li>
+     *   <li>It's a server message and this is a client</li>
+     *   <li>It's a client message and this is a server</li>
+     * </ul>
+     * 
+     * <p>This ensures proper client-server communication where:
+     * clients only receive server messages and servers only receive client messages.</p>
      *
      * @param message the message to check
-     *
-     * @return true, if it's a relevant meessage. false if the protocol
-     *	is wrong or if the server recv a server message/the client recv a
-     * 	client message. Clients should only recv server messages and servers
-     *	should only recv client messages.
+     * @return true if the message should be processed by this protocol instance
      */
     public final boolean isRelevantMessage(VSMessage message) {
         if (isIncorrectProtocol(message))
@@ -280,10 +308,17 @@ abstract public class VSAbstractProtocol extends VSAbstractEvent {
     }
 
     /**
-     * Reschedules the protocol for a new time and runs onClientSchedule or
-     *	onServerSchedule
+     * Schedules this protocol to execute at a specific local time.
+     * When the scheduled time arrives, either {@link #onServerSchedule()} or
+     * {@link #onClientSchedule()} will be called based on the current context.
+     * 
+     * <p>The schedule is tracked separately for server and client contexts,
+     * allowing independent scheduling for each role.</p>
      *
-     * @param time The process' local time to run the schedule at.
+     * @param time the process's local time when the schedule should execute
+     * @see #onServerSchedule()
+     * @see #onClientSchedule()
+     * @see VSProtocolScheduleEvent
      */
     public final void scheduleAt(long time) {
         VSInternalProcess internalProcess = (VSInternalProcess) process;
@@ -320,56 +355,104 @@ abstract public class VSAbstractProtocol extends VSAbstractEvent {
     }
 
     /**
-     * On client init.
+     * Called once when the protocol's client functionality is first initialized.
+     * Subclasses should implement this to set up client-specific state,
+     * initialize data structures, and prepare for client operations.
+     * 
+     * <p>This method is called before the first {@link #onClientStart()}
+     * or {@link #onClientRecv(VSMessage)} invocation.</p>
      */
     abstract public void onClientInit();
 
     /**
-     * On client start.
+     * Called when the client protocol should begin its main operation.
+     * Only used if the protocol was created with {@code hasOnServerStart = false}.
+     * 
+     * <p>Default implementation does nothing. Override this method to implement
+     * client-initiated protocol behavior.</p>
      */
     public void onClientStart() { };
 
     /**
-     * On client reset.
+     * Called when the protocol's client state should be reset.
+     * Subclasses should implement this to clear client-specific state
+     * and prepare for potential re-initialization.
+     * 
+     * <p>All client schedules are automatically cleared before this method is called.</p>
      */
     abstract public void onClientReset();
 
     /**
-     * On client schedule.
+     * Called when a scheduled client event occurs.
+     * Subclasses should implement this to handle periodic client operations
+     * or delayed client actions.
+     * 
+     * <p>To schedule this method, use {@link #scheduleAt(long)} while in client context.</p>
+     * 
+     * @see #scheduleAt(long)
      */
     abstract public void onClientSchedule();
 
     /**
-     * On client recv.
+     * Called when the client receives a message from a server.
+     * Subclasses should implement this to handle incoming server messages
+     * and update client state accordingly.
+     * 
+     * <p>The message is guaranteed to be a server message for this protocol.</p>
      *
-     * @param message the message
+     * @param message the server message received
+     * @see #sendMessage(VSMessage)
      */
     abstract public void onClientRecv(VSMessage message);
 
     /**
-     * On server init.
+     * Called once when the protocol's server functionality is first initialized.
+     * Subclasses should implement this to set up server-specific state,
+     * initialize data structures, and prepare for server operations.
+     * 
+     * <p>This method is called before the first {@link #onServerStart()}
+     * or {@link #onServerRecv(VSMessage)} invocation.</p>
      */
     abstract public void onServerInit();
 
     /**
-     * On server start.
+     * Called when the server protocol should begin its main operation.
+     * Only used if the protocol was created with {@code hasOnServerStart = true}.
+     * 
+     * <p>Default implementation does nothing. Override this method to implement
+     * server-initiated protocol behavior.</p>
      */
     public void onServerStart() { };
 
     /**
-     * On server reset.
+     * Called when the protocol's server state should be reset.
+     * Subclasses should implement this to clear server-specific state
+     * and prepare for potential re-initialization.
+     * 
+     * <p>All server schedules are automatically cleared before this method is called.</p>
      */
     abstract public void onServerReset();
 
     /**
-     * On server recv.
+     * Called when the server receives a message from a client.
+     * Subclasses should implement this to handle incoming client messages
+     * and update server state accordingly.
+     * 
+     * <p>The message is guaranteed to be a client message for this protocol.</p>
      *
-     * @param message the message
+     * @param message the client message received
+     * @see #sendMessage(VSMessage)
      */
     abstract public void onServerRecv(VSMessage message);
 
     /**
-     * On server schedule.
+     * Called when a scheduled server event occurs.
+     * Subclasses should implement this to handle periodic server operations
+     * or delayed server actions.
+     * 
+     * <p>To schedule this method, use {@link #scheduleAt(long)} while in server context.</p>
+     * 
+     * @see #scheduleAt(long)
      */
     abstract public void onServerSchedule();
 

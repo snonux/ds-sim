@@ -6,11 +6,28 @@ import core.VSInternalProcess;
  * Concrete implementation of a Lamport timestamp-triggered event.
  * This event fires when a specific Lamport timestamp condition is met.
  * 
- * Example usage:
- * - Fire when Lamport time equals 10
- * - Fire when Lamport time reaches 50 or greater
- * - Fire when Lamport time is less than 5
+ * <p>This class allows you to create events that trigger based on Lamport logical time.
+ * You can specify conditions such as:</p>
+ * <ul>
+ *   <li>Fire when Lamport time equals 10</li>
+ *   <li>Fire when Lamport time reaches 50 or greater</li>
+ *   <li>Fire when Lamport time is less than 5</li>
+ * </ul>
+ * 
+ * <p>Example usage:</p>
+ * <pre>{@code
+ * // Create event that fires when Lamport time reaches 100
+ * VSLamportTimestampEvent event = new VSLamportTimestampEvent(
+ *     100, ComparisonOperator.GREATER_EQUAL, "Checkpoint reached");
+ * 
+ * // Add custom action
+ * event.setCustomAction(() -> {
+ *     System.out.println("Lamport time 100 reached!");
+ * });
+ * }</pre>
  *
+ * @see VSTimestampTriggeredEvent
+ * @see VSTimestampMonitorEvent
  * @author Paul C. Buetow
  */
 public class VSLamportTimestampEvent extends VSTimestampTriggeredEvent {

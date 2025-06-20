@@ -42,63 +42,71 @@ abstract public class VSAbstractEvent extends VSSerializablePrefs {
     private String eventClassname;
 
     /**
-     * Check if this event is an internal event.
+     * Checks if this event is an internal event.
+     * Internal events are system events that don't directly correspond to user actions.
      * 
-     * @return true if this is an internal event
+     * @return true if this is an internal event, false otherwise
      */
     public boolean isInternalEvent() {
         return false;
     }
     
     /**
-     * Check if this event is serializable.
+     * Checks if this event can be serialized for saving/loading simulations.
+     * Most events are serializable, but some runtime-only events may not be.
      * 
-     * @return true if this event is serializable
+     * @return true if this event can be serialized, false otherwise
      */
     public boolean isSerializable() {
         return true;
     }
     
     /**
-     * Check if this event is a message receive event.
+     * Checks if this event represents receiving a message.
+     * Message receive events are triggered when a process receives a message.
      * 
-     * @return true if this is a message receive event
+     * @return true if this is a message receive event, false otherwise
      */
     public boolean isMessageReceiveEvent() {
         return false;
     }
     
     /**
-     * Check if this event is a process recover event.
+     * Checks if this event represents a process recovery.
+     * Process recover events restore a crashed process to operational state.
      * 
-     * @return true if this is a process recover event
+     * @return true if this is a process recover event, false otherwise
      */
     public boolean isProcessRecoverEvent() {
         return false;
     }
     
     /**
-     * Check if this event is a process crash event.
+     * Checks if this event represents a process crash.
+     * Process crash events simulate process failures in the distributed system.
      * 
-     * @return true if this is a process crash event
+     * @return true if this is a process crash event, false otherwise
      */
     public boolean isProcessCrashEvent() {
         return false;
     }
     
     /**
-     * Check if this event is a protocol event.
+     * Checks if this event is a protocol-related event.
+     * Protocol events manage protocol activation/deactivation.
      * 
-     * @return true if this is a protocol event
+     * @return true if this is a protocol event, false otherwise
      */
     public boolean isProtocolEvent() {
         return false;
     }
     
     /**
-     * Check if this event should trigger timestamp increases when executed.
+     * Determines if executing this event should increase the process's timestamps.
+     * Most events increase timestamps, but some internal events may not.
+     * This affects both Lamport and vector clocks based on preferences.
      * 
-     * @return true if timestamps should be increased
+     * @return true if timestamps should be increased when this event executes
      */
     public boolean shouldIncreaseTimestamps() {
         return true;

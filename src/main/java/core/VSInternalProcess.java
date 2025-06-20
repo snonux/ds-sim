@@ -14,9 +14,24 @@ import simulator.VSSimulatorVisualization;
 import utils.VSPriorityQueue;
 
 /**
- * The class VSInternalProcess, an object of this class represents a process
- * of a simulator.
+ * Internal process implementation for the distributed systems simulator.
+ * This class extends {@link VSAbstractProcess} with simulation-specific features
+ * including:
+ * <ul>
+ *   <li>Time synchronization with global simulation clock</li>
+ *   <li>Clock variance simulation for realistic distributed behavior</li>
+ *   <li>Visual highlighting and color management</li>
+ *   <li>Vector clock monitoring for timestamp-triggered events</li>
+ *   <li>Process crash simulation</li>
+ *   <li>Protocol and event management</li>
+ * </ul>
+ * 
+ * <p>Each process maintains its own local time that drifts from global time
+ * based on configured clock variance, simulating realistic clock skew in
+ * distributed systems.</p>
  *
+ * @see VSAbstractProcess
+ * @see VSSimulatorVisualization
  * @author Paul C. Buetow
  */
 public class VSInternalProcess extends VSAbstractProcess {
@@ -39,8 +54,17 @@ public class VSInternalProcess extends VSAbstractProcess {
     }
 
     /**
-     * Called from the VSProcessEditor, after finishing editing! This makes
-     * sure that the VSInternalProcess object is using the up to date prefs!
+     * Updates this process's configuration from its preference settings.
+     * Called by {@link simulator.VSProcessEditor} after editing is complete
+     * to apply any configuration changes.
+     * 
+     * <p>This method updates:</p>
+     * <ul>
+     *   <li>Clock variance for time drift simulation</li>
+     *   <li>Local time value</li>
+     *   <li>Process colors</li>
+     *   <li>Random crash parameters</li>
+     * </ul>
      */
     public synchronized void updateFromPrefs() {
         setClockVariance(getFloat("process.clock.variance"));
@@ -50,8 +74,15 @@ public class VSInternalProcess extends VSAbstractProcess {
     }
 
     /**
-     * Called from the VSProcessEditor, before starting editing! This makes
-     * sure that the editor edits the up to date prefs of the process!
+     * Saves this process's current state to its preference settings.
+     * Called by {@link simulator.VSProcessEditor} before editing begins
+     * to ensure the editor shows current values.
+     * 
+     * <p>This method saves:</p>
+     * <ul>
+     *   <li>Current clock variance</li>
+     *   <li>Current local time</li>
+     * </ul>
      */
     public synchronized void updatePrefs() {
         setFloat("process.clock.variance", getClockVariance());
@@ -59,12 +90,22 @@ public class VSInternalProcess extends VSAbstractProcess {
     }
 
     /**
-     * Syncs the process' time. This method is using the clockOffset and
-     * clockVariance variables. This method is called repeatedly from the
-     * VSSimulatorVisualization in order to update the process' local and global
-     * time values.
+     * Synchronizes this process's time with the global simulation time.
+     * This method simulates realistic clock drift using the configured
+     * clock variance.
+     * 
+     * <p>The synchronization algorithm:</p>
+     * <ol>
+     *   <li>Calculates time elapsed since last sync</li>
+     *   <li>Advances local time by elapsed time</li>
+     *   <li>Applies clock drift based on variance</li>
+     *   <li>Accumulates fractional time in clockOffset</li>
+     *   <li>Ensures time never goes negative</li>
+     * </ol>
+     * 
+     * <p>Called repeatedly by {@link VSSimulatorVisualization} during simulation.</p>
      *
-     * @param globalTime the global time.
+     * @param globalTime the current global simulation time
      */
     public synchronized void syncTime(final long globalTime) {
         final long currentGlobalTimestep = globalTime - this.globalTime;
@@ -89,7 +130,11 @@ public class VSInternalProcess extends VSAbstractProcess {
     }
 
     /**
-     * Highlights the process.
+     * Activates visual highlighting for this process.
+     * The process's current color is saved and replaced with the highlight color.
+     * Use {@link #highlightOff()} to restore the original color.
+     * 
+     * @see #highlightOff()
      */
     public synchronized void highlightOn() {
         tmpColor = currentColor;
@@ -159,28 +204,47 @@ public class VSInternalProcess extends VSAbstractProcess {
     }
 
     /**
-     * Creates a random percentage 0..100 using the process' own pseudo
-     * random number generator object of the VSRandom class.
+     * Generates a random percentage value between 0 and 100 (inclusive).
+     * Uses this process's dedicated random number generator to ensure
+     * reproducible results for a given random seed.
+     * 
+     * <p>This method is commonly used for:</p>
+     * <ul>
+     *   <li>Probabilistic event triggering</li>
+     *   <li>Random crash simulation</li>
+     *   <li>Message loss simulation</li>
+     * </ul>
      *
-     * @return A random percentage 0..100.
+     * @return a random integer between 0 and 100 inclusive
+     * @see utils.VSRandom
      */
     public synchronized int getRandomPercentage() {
         return random.nextInt() % constants.VSConstants.PERCENTAGE_RANGE;
     }
 
     /**
-     * Adds the clock offset. This method is used by the task manager. The
-     * clock offset identifies if the local time of the process has changed and
-     * how much..
+     * Adds to this process's clock offset, adjusting its local time drift.
+     * Used by the task manager when tasks modify process time.
+     * 
+     * <p>The clock offset accumulates fractional time units that are
+     * converted to whole time units during {@link #syncTime(long)}.</p>
      *
-     * @param add the clock offset to add.
+     * @param add the amount to add to the clock offset (can be negative)
+     * @see VSTaskManager#runTasks(long)
      */
     public synchronized void addClockOffset(long add) {
         this.clockOffset += add;
     }
 
     /**
-     * The process' state is 'play'. Called by the simulator canvas.
+     * Transitions this process to the 'playing' state.
+     * The process resumes normal operation and its color changes
+     * to indicate running status.
+     * 
+     * <p>Called by the simulator when starting or resuming simulation.</p>
+     * 
+     * @see #pause()
+     * @see #finish()
      */
     public synchronized void play() {
         isPaused = false;
@@ -188,7 +252,14 @@ public class VSInternalProcess extends VSAbstractProcess {
     }
 
     /**
-     * The process' state is 'pause'. Called by the simulator canvas.
+     * Transitions this process to the 'paused' state.
+     * The process stops executing and its color changes
+     * to indicate stopped status.
+     * 
+     * <p>Called by the simulator when pausing simulation.</p>
+     * 
+     * @see #play()
+     * @see #finish()
      */
     public synchronized void pause() {
         isPaused = true;
@@ -196,7 +267,13 @@ public class VSInternalProcess extends VSAbstractProcess {
     }
 
     /**
-     * The process' state is 'Finish'. Called by the simulator canvas.
+     * Transitions this process to the 'finished' state.
+     * The process stops executing and returns to its default color.
+     * 
+     * <p>Called by the simulator when ending simulation.</p>
+     * 
+     * @see #play()
+     * @see #pause()
      */
     public synchronized void finish() {
         isPaused = true;
@@ -222,11 +299,15 @@ public class VSInternalProcess extends VSAbstractProcess {
     }
 
     /**
-     * Checks if the time has been modified. by a task.
-     * This mehod is needed by the task manager in order to add a clock offset
-     * to the process object.
+     * Checks if this process's time has been modified by a task.
+     * The task manager uses this flag to determine if clock offset
+     * adjustments are needed after task execution.
+     * 
+     * <p>This flag is set when tasks directly modify the process's
+     * local time, requiring synchronization adjustments.</p>
      *
-     * @return true, if yes
+     * @return true if the time has been modified since last check
+     * @see VSTaskManager#runTasks(long)
      */
     public synchronized boolean timeModified() {
         return timeModified;
