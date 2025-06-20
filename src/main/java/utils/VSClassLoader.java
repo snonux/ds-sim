@@ -1,5 +1,8 @@
 package utils;
 
+import exceptions.VSErrorHandler;
+import exceptions.VSSimulatorRuntimeException;
+
 /**
  * The class VSClassLoader. This class is used in order to create new objects
  * by its classnames.
@@ -13,17 +16,26 @@ public class VSClassLoader extends ClassLoader {
      * @param classname the classname
      *
      * @return the object
+     * @throws VSSimulatorRuntimeException if the class cannot be loaded or instantiated
      */
     public Object newInstance(String classname) {
-        Object object = null;
-
-        try {
-            object = super.loadClass(classname, true).getDeclaredConstructor().newInstance();
-
-        } catch (Exception e) {
-            System.out.println(e + "; Classname " + classname);
+        if (classname == null || classname.trim().isEmpty()) {
+            VSErrorHandler.warning("Attempted to load null or empty classname");
+            return null;
         }
 
-        return object;
+        try {
+            return super.loadClass(classname, true).getDeclaredConstructor().newInstance();
+
+        } catch (ClassNotFoundException e) {
+            VSErrorHandler.handle("Class not found: " + classname, e, false);
+            return null;
+        } catch (NoSuchMethodException e) {
+            VSErrorHandler.handle("No default constructor for class: " + classname, e, false);
+            return null;
+        } catch (Exception e) {
+            VSErrorHandler.handle("Failed to instantiate class: " + classname, e, false);
+            return null;
+        }
     }
 }

@@ -1,16 +1,21 @@
 package exceptions;
 
 /**
- * The Interface VSEventNotCopyableException, this exception is thrown if
- * the someone tried to copy a not copyable event!
+ * Exception thrown when attempting to copy an event that does not support copying.
+ * Events must implement VSCopyableEvent interface to be copyable.
  *
  * @author Paul C. Buetow
  */
-public class VSEventNotCopyableException extends Exception {
+public class VSEventNotCopyableException extends VSSimulatorException {
     /** The serial version uid */
     private static final long serialVersionUID = 1L;
 
-    public VSEventNotCopyableException(String descr) {
-        super(descr);
+    /**
+     * Constructs a new event not copyable exception with the specified event description.
+     *
+     * @param eventDescription description of the event that cannot be copied
+     */
+    public VSEventNotCopyableException(String eventDescription) {
+        super("Event cannot be copied: " + eventDescription);
     }
 }

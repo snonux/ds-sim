@@ -74,8 +74,10 @@ public class VSVectorTimestampEvent extends VSTimestampTriggeredEvent {
         if (customAction != null) {
             try {
                 customAction.run();
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
+                // Log the error but don't let it stop the event processing
                 internalProcess.log("Error executing custom action: " + e.getMessage());
+                exceptions.VSErrorHandler.warning("Vector timestamp event custom action failed", e);
             }
         }
         
