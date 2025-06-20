@@ -60,6 +60,10 @@ public final class VSRegisteredEvents {
         prefs = prefs_;
         registerEvent("events.implementations.VSProcessCrashEvent");
         registerEvent("events.implementations.VSProcessRecoverEvent");
+        registerEvent("events.implementations.VSLamportTimestampEvent");
+        registerEvent("events.implementations.VSVectorTimestampEvent");
+        registerEvent("events.implementations.VSTimestampMonitorEvent");
+        registerEvent("events.implementations.VSTimestampTriggeredEvent");
         registerEvent("protocols.implementations.VSBasicMulticastProtocol");
         registerEvent("protocols.implementations.VSBerkelyTimeProtocol");
         registerEvent("protocols.implementations.VSBroadcastProtocol");
@@ -70,6 +74,7 @@ public final class VSRegisteredEvents {
         registerEvent("protocols.implementations.VSPingPongProtocol");
         registerEvent("protocols.implementations.VSReliableMulticastProtocol");
         registerEvent("protocols.implementations.VSTwoPhaseCommitProtocol");
+        registerEvent("protocols.implementations.VSTimestampDemoProtocol");
 
         /* Make dummy objects of each protocol, to see if they contain VSPrefs
            values to edit */

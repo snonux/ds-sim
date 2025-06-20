@@ -179,6 +179,18 @@ public class VSDefaultPrefs extends VSSerializablePrefs {
         initString("lang.protocols.implementations.VSReliableMulticastProtocol.short", "Reliable Multicast");
         initString("lang.protocols.implementations.VSTwoPhaseCommitProtocol", "Two-Phase Commit");
         initString("lang.protocols.implementations.VSTwoPhaseCommitProtocol.short", "2-Phase Commit");
+        
+        /* Timestamp event names */
+        initString("lang.events.implementations.VSLamportTimestampEvent", "Lamport Timestamp Event");
+        initString("lang.events.implementations.VSLamportTimestampEvent.short", "Lamport Trigger");
+        initString("lang.events.implementations.VSVectorTimestampEvent", "Vector Timestamp Event");
+        initString("lang.events.implementations.VSVectorTimestampEvent.short", "Vector Trigger");
+        initString("lang.events.implementations.VSTimestampMonitorEvent", "Timestamp Monitor Event");
+        initString("lang.events.implementations.VSTimestampMonitorEvent.short", "Timestamp Monitor");
+        initString("lang.events.implementations.VSTimestampTriggeredEvent", "Timestamp Triggered Event");
+        initString("lang.events.implementations.VSTimestampTriggeredEvent.short", "Timestamp Trigger");
+        initString("lang.protocols.implementations.VSTimestampDemoProtocol", "Timestamp Demo Protocol");
+        initString("lang.protocols.implementations.VSTimestampDemoProtocol.short", "Timestamp Demo");
     }
 
     /**

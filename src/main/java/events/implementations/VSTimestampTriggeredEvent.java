@@ -1,10 +1,15 @@
 package events.implementations;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
 import core.VSInternalProcess;
 import core.time.VSLamportTime;
 import core.time.VSVectorTime;
 import events.VSAbstractEvent;
 import events.VSCopyableEvent;
+import serialize.VSSerialize;
 
 /**
  * Abstract base class for timestamp-triggered events that fire when specific
@@ -260,5 +265,60 @@ public abstract class VSTimestampTriggeredEvent extends VSAbstractEvent implemen
     
     public void reset() {
         hasTriggered = false;
+    }
+    
+    @Override
+    public synchronized void serialize(VSSerialize serialize,
+                                     ObjectOutputStream objectOutputStream)
+    throws IOException {
+        super.serialize(serialize, objectOutputStream);
+        
+        if (VSSerialize.DEBUG)
+            System.out.println("Serializing: VSTimestampTriggeredEvent; id="+getID());
+        
+        /** For later backwards compatibility, to add more stuff */
+        objectOutputStream.writeObject(Boolean.valueOf(false));
+        
+        objectOutputStream.writeObject(timestampType);
+        objectOutputStream.writeObject(operator);
+        objectOutputStream.writeObject(Long.valueOf(targetLamportTime));
+        objectOutputStream.writeObject(Boolean.valueOf(hasTriggered));
+        
+        // Serialize vector time if present
+        boolean hasVectorTime = (targetVectorTime != null);
+        objectOutputStream.writeObject(Boolean.valueOf(hasVectorTime));
+        if (hasVectorTime) {
+            objectOutputStream.writeObject(targetVectorTime);
+        }
+        
+        /** For later backwards compatibility, to add more stuff */
+        objectOutputStream.writeObject(Boolean.valueOf(false));
+    }
+    
+    @Override
+    public synchronized void deserialize(VSSerialize serialize,
+                                       ObjectInputStream objectInputStream)
+    throws IOException, ClassNotFoundException {
+        super.deserialize(serialize, objectInputStream);
+        
+        if (VSSerialize.DEBUG)
+            System.out.print("Deserializing: VSTimestampTriggeredEvent ");
+        
+        /** For later backwards compatibility, to add more stuff */
+        objectInputStream.readObject();
+        
+        timestampType = (TimestampType) objectInputStream.readObject();
+        operator = (ComparisonOperator) objectInputStream.readObject();
+        targetLamportTime = ((Long) objectInputStream.readObject()).longValue();
+        hasTriggered = ((Boolean) objectInputStream.readObject()).booleanValue();
+        
+        // Deserialize vector time if present
+        boolean hasVectorTime = ((Boolean) objectInputStream.readObject()).booleanValue();
+        if (hasVectorTime) {
+            targetVectorTime = (VSVectorTime) objectInputStream.readObject();
+        }
+        
+        /** For later backwards compatibility, to add more stuff */
+        objectInputStream.readObject();
     }
 }

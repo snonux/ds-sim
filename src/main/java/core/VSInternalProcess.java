@@ -6,6 +6,7 @@ import core.time.VSVectorTime;
 import events.VSAbstractEvent;
 import events.VSRegisteredEvents;
 import events.implementations.VSProcessCrashEvent;
+import events.implementations.VSVectorClockMonitor;
 import prefs.VSPrefs;
 import protocols.VSAbstractProtocol;
 import simulator.VSLogging;
@@ -19,6 +20,9 @@ import utils.VSPriorityQueue;
  * @author Paul C. Buetow
  */
 public class VSInternalProcess extends VSAbstractProcess {
+    /** The vector clock monitor for timestamp-triggered events */
+    private VSVectorClockMonitor vectorClockMonitor;
+    
     /**
      * Instantiates a new process.
      *
@@ -31,6 +35,7 @@ public class VSInternalProcess extends VSAbstractProcess {
                              VSSimulatorVisualization simulatorVisualization,
                              VSLogging loging) {
         super(prefs, processNum, simulatorVisualization, loging);
+        vectorClockMonitor = new VSVectorClockMonitor(this);
     }
 
     /**
@@ -116,6 +121,11 @@ public class VSInternalProcess extends VSAbstractProcess {
 
         setCurrentColor(getColor("col.process.default"));
         resetTimeFormats();
+        
+        // Clear any vector clock monitor events
+        if (vectorClockMonitor != null) {
+            vectorClockMonitor.clearVectorEvents();
+        }
     }
 
     /**
@@ -431,5 +441,34 @@ public class VSInternalProcess extends VSAbstractProcess {
      */
     protected VSAbstractProtocol getProtocolObject_(String protocolClassname) {
         return getProtocolObject(protocolClassname);
+    }
+    
+    /**
+     * Override to trigger vector clock monitor when vector time is increased
+     */
+    @Override
+    public synchronized void increaseVectorTime() {
+        super.increaseVectorTime();
+        if (vectorClockMonitor != null) {
+            vectorClockMonitor.checkVectorEvents();
+        }
+    }
+    
+    /**
+     * Override to trigger vector clock monitor when vector time is updated
+     */
+    @Override
+    public synchronized void updateVectorTime(VSVectorTime vectorTimeUpdate) {
+        super.updateVectorTime(vectorTimeUpdate);
+        if (vectorClockMonitor != null) {
+            vectorClockMonitor.checkVectorEvents();
+        }
+    }
+    
+    /**
+     * Get the vector clock monitor for adding timestamp events
+     */
+    public VSVectorClockMonitor getVectorClockMonitor() {
+        return vectorClockMonitor;
     }
 }

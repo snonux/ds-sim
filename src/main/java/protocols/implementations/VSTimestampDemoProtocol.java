@@ -9,7 +9,6 @@ import events.implementations.VSLamportTimestampEvent;
 import events.implementations.VSTimestampMonitorEvent;
 import events.implementations.VSTimestampTriggeredEvent;
 import events.implementations.VSVectorTimestampEvent;
-import events.implementations.VSVectorClockMonitor;
 import protocols.VSAbstractProtocol;
 
 /**
@@ -30,7 +29,6 @@ public class VSTimestampDemoProtocol extends VSAbstractProtocol {
     }
     
     private VSTimestampMonitorEvent lamportMonitor;
-    private VSVectorClockMonitor vectorMonitor;
     
     @Override
     public void onServerInit() {
@@ -79,8 +77,6 @@ public class VSTimestampDemoProtocol extends VSAbstractProtocol {
         // Create monitors for timestamp events
         lamportMonitor = new VSTimestampMonitorEvent(1); // Check every time unit
         lamportMonitor.init(internalProcess);
-        
-        vectorMonitor = new VSVectorClockMonitor(internalProcess);
         
         // Set up Lamport timestamp event
         setupLamportEvent();
@@ -155,7 +151,7 @@ public class VSTimestampDemoProtocol extends VSAbstractProtocol {
             }
         );
         
-        vectorMonitor.addVectorEvent(vectorEvent);
+        ((VSInternalProcess) process).getVectorClockMonitor().addVectorEvent(vectorEvent);
     }
     
     @Override
@@ -184,8 +180,8 @@ public class VSTimestampDemoProtocol extends VSAbstractProtocol {
         if (lamportMonitor != null) {
             lamportMonitor.stopMonitoring();
         }
-        if (vectorMonitor != null) {
-            vectorMonitor.clearVectorEvents();
+        if (process instanceof VSInternalProcess) {
+            ((VSInternalProcess) process).getVectorClockMonitor().clearVectorEvents();
         }
     }
     
@@ -194,8 +190,8 @@ public class VSTimestampDemoProtocol extends VSAbstractProtocol {
         if (lamportMonitor != null) {
             lamportMonitor.stopMonitoring();
         }
-        if (vectorMonitor != null) {
-            vectorMonitor.clearVectorEvents();
+        if (process instanceof VSInternalProcess) {
+            ((VSInternalProcess) process).getVectorClockMonitor().clearVectorEvents();
         }
     }
     
