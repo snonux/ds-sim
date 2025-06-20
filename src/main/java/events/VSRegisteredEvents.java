@@ -99,6 +99,7 @@ public final class VSRegisteredEvents {
         registerEvent("protocols.implementations.VSReliableMulticastProtocol");
         registerEvent("protocols.implementations.VSTwoPhaseCommitProtocol");
         registerEvent("protocols.implementations.VSTimestampDemoProtocol");
+        registerEvent("protocols.implementations.VSRaftProtocol");
 
         /* Make dummy objects of each protocol, to see if they contain VSPrefs
            values to edit */

@@ -180,6 +180,8 @@ public class VSDefaultPrefs extends VSSerializablePrefs {
         initString("lang.protocols.implementations.VSReliableMulticastProtocol.short", "Reliable Multicast");
         initString("lang.protocols.implementations.VSTwoPhaseCommitProtocol", "Two-Phase Commit");
         initString("lang.protocols.implementations.VSTwoPhaseCommitProtocol.short", "2-Phase Commit");
+        initString("lang.protocols.implementations.VSRaftProtocol", "Raft Consensus Algorithm");
+        initString("lang.protocols.implementations.VSRaftProtocol.short", "Raft Consensus");
         
         /* Timestamp event names */
         initString("lang.events.implementations.VSLamportTimestampEvent", "Lamport Timestamp Event");
