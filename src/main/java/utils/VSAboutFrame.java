@@ -73,12 +73,10 @@ public class VSAboutFrame extends VSFrame {
         JButton closeButton = new JButton(
             prefs.getString("lang.close"));
         closeButton.setMnemonic(prefs.getInteger("keyevent.close"));
-        closeButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                String actionCommand = e.getActionCommand();
-                if (actionCommand.equals(prefs.getString("lang.close")))
-                    dispose();
-            }
+        closeButton.addActionListener(e -> {
+            String actionCommand = e.getActionCommand();
+            if (actionCommand.equals(prefs.getString("lang.close")))
+                dispose();
         });
         buttonPane.add(closeButton);
 

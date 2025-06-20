@@ -130,20 +130,13 @@ public abstract class VSTimestampTriggeredEvent extends VSAbstractEvent implemen
     protected boolean checkLamportCondition(VSInternalProcess process) {
         long currentLamport = process.getLamportTime();
         
-        switch (operator) {
-            case EQUAL:
-                return currentLamport == targetLamportTime;
-            case GREATER_THAN:
-                return currentLamport > targetLamportTime;
-            case LESS_THAN:
-                return currentLamport < targetLamportTime;
-            case GREATER_EQUAL:
-                return currentLamport >= targetLamportTime;
-            case LESS_EQUAL:
-                return currentLamport <= targetLamportTime;
-            default:
-                return false;
-        }
+        return switch (operator) {
+            case EQUAL -> currentLamport == targetLamportTime;
+            case GREATER_THAN -> currentLamport > targetLamportTime;
+            case LESS_THAN -> currentLamport < targetLamportTime;
+            case GREATER_EQUAL -> currentLamport >= targetLamportTime;
+            case LESS_EQUAL -> currentLamport <= targetLamportTime;
+        };
     }
     
     /**
@@ -156,20 +149,13 @@ public abstract class VSTimestampTriggeredEvent extends VSAbstractEvent implemen
             return false;
         }
         
-        switch (operator) {
-            case EQUAL:
-                return vectorTimesEqual(currentVector, targetVectorTime);
-            case GREATER_THAN:
-                return vectorTimeGreater(currentVector, targetVectorTime, false);
-            case LESS_THAN:
-                return vectorTimeGreater(targetVectorTime, currentVector, false);
-            case GREATER_EQUAL:
-                return vectorTimeGreater(currentVector, targetVectorTime, true);
-            case LESS_EQUAL:
-                return vectorTimeGreater(targetVectorTime, currentVector, true);
-            default:
-                return false;
-        }
+        return switch (operator) {
+            case EQUAL -> vectorTimesEqual(currentVector, targetVectorTime);
+            case GREATER_THAN -> vectorTimeGreater(currentVector, targetVectorTime, false);
+            case LESS_THAN -> vectorTimeGreater(targetVectorTime, currentVector, false);
+            case GREATER_EQUAL -> vectorTimeGreater(currentVector, targetVectorTime, true);
+            case LESS_EQUAL -> vectorTimeGreater(targetVectorTime, currentVector, true);
+        };
     }
     
     /**

@@ -49,7 +49,7 @@ public class VSDummyProtocol extends VSAbstractProtocol {
      * @see protocols.VSAbstractProtocol#onClientRecv(core.VSMessage)
      */
     public void onClientRecv(VSMessage recvMessage) {
-        log("onClientRecv("+recvMessage+")");
+        log("onClientRecv(%s)".formatted(recvMessage));
 
         /*
         String s = recvMessage.getString("Greeting");
@@ -82,7 +82,7 @@ public class VSDummyProtocol extends VSAbstractProtocol {
      * @see protocols.VSAbstractProtocol#onServerRecv(core.VSMessage)
      */
     public void onServerRecv(VSMessage recvMessage) {
-        log("onServerRecv("+recvMessage+")");
+        log("onServerRecv(%s)".formatted(recvMessage));
     }
 
     /* (non-Javadoc)

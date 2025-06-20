@@ -84,22 +84,16 @@ public final class VSErrorHandler {
      * @param exception the exception to display
      */
     private static void showErrorDialog(Exception exception) {
-        String title = "Simulator Error";
+        String title = switch (exception) {
+            case VSConfigurationException e -> "Configuration Error";
+            case VSProcessException e -> "Process Error";
+            case VSProtocolException e -> "Protocol Error";
+            case VSSerializationException e -> "Save/Load Error";
+            case VSSimulatorException e -> "Simulator Error";
+            default -> "Simulator Error";
+        };
+        
         String message = exception.getMessage();
-        
-        if (exception instanceof VSSimulatorException) {
-            // Use more specific title for our exceptions
-            if (exception instanceof VSConfigurationException) {
-                title = "Configuration Error";
-            } else if (exception instanceof VSProcessException) {
-                title = "Process Error";
-            } else if (exception instanceof VSProtocolException) {
-                title = "Protocol Error";
-            } else if (exception instanceof VSSerializationException) {
-                title = "Save/Load Error";
-            }
-        }
-        
         if (message == null || message.isEmpty()) {
             message = "An unexpected error occurred: " + exception.getClass().getSimpleName();
         }
@@ -130,19 +124,12 @@ public final class VSErrorHandler {
      * @return a VSSimulatorException wrapping the original exception
      */
     public static VSSimulatorException wrap(Exception e, String context) {
-        if (e instanceof VSSimulatorException) {
-            return (VSSimulatorException) e;
-        }
-        
-        // Wrap common exceptions with more specific types
-        if (e instanceof java.io.IOException) {
-            return new VSSerializationException(context, e);
-        } else if (e instanceof NumberFormatException) {
-            return new VSConfigurationException("Invalid number format in " + context, e);
-        } else if (e instanceof NullPointerException) {
-            return new VSSimulatorException("Null value encountered in " + context, e);
-        } else {
-            return new VSSimulatorException(context + ": " + e.getMessage(), e);
-        }
+        return switch (e) {
+            case VSSimulatorException vse -> vse;
+            case java.io.IOException ioe -> new VSSerializationException(context, ioe);
+            case NumberFormatException nfe -> new VSConfigurationException("Invalid number format in " + context, nfe);
+            case NullPointerException npe -> new VSSimulatorException("Null value encountered in " + context, npe);
+            default -> new VSSimulatorException(context + ": " + e.getMessage(), e);
+        };
     }
 }
