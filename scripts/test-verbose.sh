@@ -52,3 +52,6 @@ java -cp /tmp:target/classes:target/test-classes -Djava.awt.headless=true TestVe
 
 # Clean up
 rm -f /tmp/TestVerbose.java /tmp/TestVerbose.class
+
+# Exit cleanly
+exit 0

@@ -70,12 +70,16 @@ public class HeadlessSimulationRunner {
             }
             installLogCapture();
             
-            System.out.println("Running simulation for " + maxTime + "ms...");
+            // Get the simulation's configured end time
+            long untilTime = viz.getUntilTime();
+            long actualMaxTime = Math.min(maxTime, untilTime);
+            
+            System.out.println("Running simulation for up to " + actualMaxTime + "ms (until time: " + untilTime + "ms)...");
             
             // Run simulation
             Future<Void> runFuture = executor.submit(() -> {
                 try {
-                    runSimulationSteps(maxTime);
+                    runSimulationSteps(actualMaxTime);
                 } catch (Exception e) {
                     System.err.println("Error during simulation: " + e.getMessage());
                     e.printStackTrace();
@@ -85,7 +89,7 @@ public class HeadlessSimulationRunner {
             
             // Wait for completion or timeout
             try {
-                runFuture.get(maxTime * 2, TimeUnit.MILLISECONDS);
+                runFuture.get(actualMaxTime * 2, TimeUnit.MILLISECONDS);
             } catch (TimeoutException e) {
                 System.out.println("Simulation timeout - stopping...");
                 runFuture.cancel(true);
@@ -113,31 +117,126 @@ public class HeadlessSimulationRunner {
             .getDeclaredField("time");
         timeField.setAccessible(true);
         
-        // Find runTasks method with correct signature
-        Method runTasksMethod = VSTaskManager.class
-            .getDeclaredMethod("runTasks", long.class, long.class, long.class);
-        runTasksMethod.setAccessible(true);
+        // Get simulatorTime field for accurate time tracking
+        Field simulatorTimeField = VSSimulatorVisualization.class
+            .getDeclaredField("simulatorTime");
+        simulatorTimeField.setAccessible(true);
+        
+        // Get isPaused and hasFinished fields
+        Field isPausedField = VSSimulatorVisualization.class
+            .getDeclaredField("isPaused");
+        isPausedField.setAccessible(true);
+        Field hasFinishedField = VSSimulatorVisualization.class
+            .getDeclaredField("hasFinished");
+        hasFinishedField.setAccessible(true);
+        
+        // Get clockSpeed field and ensure it's set
+        Field clockSpeedField = VSSimulatorVisualization.class
+            .getDeclaredField("clockSpeed");
+        clockSpeedField.setAccessible(true);
+        double clockSpeed = clockSpeedField.getDouble(viz);
+        if (clockSpeed == 0) {
+            // Set default clock speed if not initialized
+            clockSpeed = 1.0;
+            clockSpeedField.setDouble(viz, clockSpeed);
+        }
+        
+        // Get task queue fields for checking if tasks remain
+        Field globalTasksField = VSTaskManager.class.getDeclaredField("globalTasks");
+        globalTasksField.setAccessible(true);
+        
+        // Set isPaused to false to allow simulation to run
+        isPausedField.setBoolean(viz, false);
+        hasFinishedField.setBoolean(viz, false);
         
         long startTime = timeField.getLong(viz);
         long currentTime = startTime;
+        long endTime = startTime + maxTime;
+        int noActivityCount = 0;
+        int lastLogCount = 0;
+        long lastActiveTime = 0;
         
-        while (currentTime - startTime < maxTime) {
-            // Update time
-            timeField.setLong(viz, currentTime);
-            
-            // Sync process times
+        // Call updateSimulator method to advance simulation
+        Method updateSimulatorMethod = VSSimulatorVisualization.class
+            .getDeclaredMethod("updateSimulator", long.class, long.class);
+        updateSimulatorMethod.setAccessible(true);
+        
+        System.out.println("Starting simulation at time " + startTime + ", running until " + endTime);
+        
+        while (currentTime < endTime) {
+            // Sync all process times BEFORE running tasks
             for (int i = 0; i < viz.getNumProcesses(); i++) {
-                viz.getProcess(i).syncTime(currentTime);
+                VSInternalProcess process = viz.getProcess(i);
+                if (process != null) {
+                    process.syncTime(currentTime);
+                }
             }
             
-            // Run tasks (step, offset, lastGlobalTime)
-            runTasksMethod.invoke(taskManager, currentTime, 0L, currentTime - 1);
+            // Update simulation time - this also runs tasks internally
+            updateSimulatorMethod.invoke(viz, currentTime, currentTime - 1);
+            long simulatorTime = simulatorTimeField.getLong(viz);
+            
+            // Check if there's been any activity
+            int currentLogCount = logCapture.getTotalLogCount();
+            boolean hasActivity = currentLogCount > lastLogCount || 
+                                 hasPendingActivity(taskManager, globalTasksField, simulatorTime);
+            
+            if (hasActivity) {
+                noActivityCount = 0;
+                lastLogCount = currentLogCount;
+                lastActiveTime = currentTime;
+            } else {
+                noActivityCount++;
+                // If no activity for 3000ms (3 seconds) of simulation time, stop
+                // This accounts for message delivery times of 500-2000ms plus some buffer
+                if (noActivityCount > 3000 && (currentTime - lastActiveTime) > 3000) {
+                    System.out.println("No activity detected for 3 seconds - simulation complete at time " + simulatorTime);
+                    break;
+                }
+            }
             
             // Advance time by 1ms
             currentTime++;
+            timeField.setLong(viz, currentTime);
             
-            // Small delay to prevent CPU spinning
-            Thread.sleep(1);
+            // No delay needed - let simulation run at full speed
+        }
+        
+        // Set isPaused back to true when done
+        isPausedField.setBoolean(viz, true);
+    }
+    
+    private boolean hasPendingActivity(VSTaskManager taskManager, Field globalTasksField, long currentTime) {
+        try {
+            // Check global tasks
+            Queue<?> globalTasks = (Queue<?>) globalTasksField.get(taskManager);
+            if (globalTasks != null && !globalTasks.isEmpty()) {
+                return true; // If any global tasks exist, keep running
+            }
+            
+            // Check process-specific tasks
+            for (int i = 0; i < viz.getNumProcesses(); i++) {
+                VSInternalProcess process = viz.getProcess(i);
+                if (process != null) {
+                    Queue<VSTask> tasks = process.getTasks();
+                    if (tasks != null && !tasks.isEmpty()) {
+                        return true; // If any process tasks exist, keep running
+                    }
+                }
+            }
+            
+            // Check for messages in transit
+            Field messageLinesField = VSSimulatorVisualization.class.getDeclaredField("messageLines");
+            messageLinesField.setAccessible(true);
+            LinkedList<?> messageLines = (LinkedList<?>) messageLinesField.get(viz);
+            if (messageLines != null && !messageLines.isEmpty()) {
+                return true; // Messages are still being delivered
+            }
+            
+            return false;
+        } catch (Exception e) {
+            // If we can't check, assume there might be activity
+            return true;
         }
     }
     
@@ -202,6 +301,9 @@ public class HeadlessSimulationRunner {
         // Create a headless simulation engine
         HeadlessSimulationEngine engine = new HeadlessSimulationEngine(prefs, logCapture);
         
+        // Set the task manager from the visualization
+        engine.setTaskManager(viz.getTaskManager());
+        
         // Copy processes to engine
         for (int i = 0; i < viz.getNumProcesses(); i++) {
             VSInternalProcess process = viz.getProcess(i);
@@ -213,10 +315,5 @@ public class HeadlessSimulationRunner {
                 process.setMessageHandler(handler);
             }
         }
-        
-        // Note: Task manager state is not copied because:
-        // - Global tasks are in VSTaskManager.globalTasks
-        // - Local tasks are stored in each VSInternalProcess.tasks
-        // - The engine already has references to the processes which contain their tasks
     }
 }

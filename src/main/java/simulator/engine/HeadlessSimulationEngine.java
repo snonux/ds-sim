@@ -24,23 +24,12 @@ public class HeadlessSimulationEngine extends AbstractSimulationEngine {
             return time; // Deliver immediately if process not found
         }
         
-        // Calculate network delay
-        long networkDelay = prefs.getLong("sim.network.delay");
-        long variability = prefs.getLong("sim.network.variability");
+        // Use the process's getDurationTime method to get the message duration
+        // This respects the message.sendingtime.min and message.sendingtime.max preferences
+        long durationTime = source.getDurationTime();
         
-        // Add random variability
-        if (variability > 0) {
-            long variance = (long)(Math.random() * variability * 2) - variability;
-            networkDelay += variance;
-        }
-        
-        // Ensure minimum delay
-        if (networkDelay < 0) {
-            networkDelay = 0;
-        }
-        
-        // Calculate delivery time based on source process time
-        return source.getTime() + networkDelay;
+        // Calculate delivery time based on source process's global time + duration
+        return source.getGlobalTime() + durationTime;
     }
     
     @Override
@@ -48,6 +37,13 @@ public class HeadlessSimulationEngine extends AbstractSimulationEngine {
         // In DS-Sim, messages are broadcast to all processes
         VSInternalProcess sendingProcess = (VSInternalProcess) message.getSendingProcess();
         boolean recvOwn = prefs.getBoolean("sim.message.own.recv");
+        
+        // Debug logging
+        if (loging != null) {
+            loging.log("Message " + message.getMessageID() + " scheduled for delivery at time " + 
+                      deliveryTime + " (sent at globalTime=" + sendingProcess.getGlobalTime() + 
+                      ", duration=" + (deliveryTime - sendingProcess.getGlobalTime()) + "ms)");
+        }
         
         // Schedule delivery to all processes
         for (VSInternalProcess receiverProcess : processes) {
@@ -62,12 +58,6 @@ public class HeadlessSimulationEngine extends AbstractSimulationEngine {
             VSMessageReceiveEvent receiveEvent = new VSMessageReceiveEvent(message);
             VSTask task = new VSTask(deliveryTime, receiverProcess, receiveEvent, VSTask.GLOBAL);
             taskManager.addTask(task);
-            
-            if (loging != null) {
-                loging.log("Message scheduled for delivery to process " + 
-                          receiverProcess.getProcessNum() + "; ID: " + 
-                          message.getMessageID() + "; Time: " + deliveryTime);
-            }
         }
     }
     

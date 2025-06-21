@@ -16,7 +16,7 @@ public abstract class AbstractSimulationEngine implements SimulationEngine {
     protected final VSPrefs prefs;
     protected final List<VSInternalProcess> processes;
     protected final List<SimulationVisualizer> visualizers;
-    protected final VSTaskManager taskManager;
+    protected VSTaskManager taskManager;
     protected VSLogging loging;
     
     protected long time;
@@ -38,18 +38,15 @@ public abstract class AbstractSimulationEngine implements SimulationEngine {
     
     @Override
     public void sendMessage(VSMessage message) {
+        // Calculate proper delivery time
+        long deliveryTime = calculateDeliveryTime(message);
+        
         // Schedule message delivery to all processes (broadcast model)
-        scheduleMessageDelivery(message, time);
+        scheduleMessageDelivery(message, deliveryTime);
         
         // Notify visualizers
         for (SimulationVisualizer visualizer : visualizers) {
             visualizer.onMessageSent(message);
-        }
-        
-        // Log the message
-        if (loging != null) {
-            loging.log("Message sent; ID: " + message.getMessageID() + 
-                      "; Protocol: " + message.getName());
         }
     }
     
@@ -98,6 +95,14 @@ public abstract class AbstractSimulationEngine implements SimulationEngine {
     @Override
     public VSTaskManager getTaskManager() {
         return taskManager;
+    }
+    
+    /**
+     * Set the task manager for this engine.
+     * Used when integrating with existing simulation infrastructure.
+     */
+    public void setTaskManager(VSTaskManager taskManager) {
+        this.taskManager = taskManager;
     }
     
     @Override

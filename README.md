@@ -125,7 +125,7 @@ mvn clean package -DskipTests
 DS-Sim includes a framework for testing protocol simulations:
 ```bash
 # Interactive test runner (Note: produces GUI errors in headless mode)
-./test-protocols.sh
+./scripts/test-protocols.sh
 ```
 
 For detailed testing information, see [docs/testing-guide.md](docs/testing-guide.md).

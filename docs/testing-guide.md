@@ -28,7 +28,7 @@ With the GUI decoupling implementation complete, protocol simulations now run cl
 
 ```bash
 # Use the interactive test script
-./test-protocols.sh
+./scripts/test-protocols.sh
 
 # Run all protocol tests directly
 java -cp target/classes:target/test-classes -Djava.awt.headless=true \
@@ -181,7 +181,7 @@ All tests now work in CI/CD environments:
 - name: Run all tests
   run: |
     mvn test
-    ./test-protocols.sh
+    ./scripts/test-protocols.sh
 ```
 
 ## Troubleshooting

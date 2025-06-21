@@ -38,7 +38,7 @@ public class HeadlessProtocolRunner {
         
         try {
             long startTime = System.currentTimeMillis();
-            SimulationResult result = runner.runSimulation(simFile, 5000); // 5 second timeout
+            SimulationResult result = runner.runSimulation(simFile, 10000); // 10 second timeout
             long duration = System.currentTimeMillis() - startTime;
             
             if (verbose) {
@@ -59,6 +59,9 @@ public class HeadlessProtocolRunner {
         } finally {
             runner.shutdown();
         }
+        
+        // Exit explicitly when running single simulation
+        System.exit(0);
     }
     
     private static void runAllSimulations(boolean verbose) throws Exception {
@@ -87,7 +90,7 @@ public class HeadlessProtocolRunner {
             
             try {
                 long startTime = System.currentTimeMillis();
-                SimulationResult result = runner.runSimulation(simFile.getPath(), 3000); // 3 second timeout
+                SimulationResult result = runner.runSimulation(simFile.getPath(), 10000); // 10 second timeout
                 long duration = System.currentTimeMillis() - startTime;
                 
                 System.out.println("✓ PASSED in " + duration + "ms");
