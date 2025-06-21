@@ -96,35 +96,39 @@ mvn compile
 mvn package -DskipTests
 ```
 
-## Running Tests
+## Testing
 
-The project includes comprehensive unit tests for core components.
+The project includes comprehensive unit tests and a testing framework for protocol simulations.
 
-### Run All Tests
+### Running Unit Tests
 ```bash
-# Run the complete test suite
+# Run all unit tests (CI-compatible)
 mvn test
-```
 
-### Run Specific Test Classes
-```bash
-# Run tests for a specific class
-mvn test -Dtest=VSTaskTest
+# Run specific test class
+mvn test -Dtest=VSMessageTest
 
 # Run tests matching a pattern
-mvn test -Dtest=VS*Test
+mvn test -Dtest="*Protocol*"
 
-# Run tests in a specific package
-mvn test -Dtest=core.*
+# Build without tests
+mvn clean package -DskipTests
 ```
 
 ### Test Coverage
-The test suite includes:
-- **Core components**: VSTask, VSMessage (45 tests)
-- **Event system**: VSAbstractEvent, VSRegisteredEvents, event implementations (55 tests)
-- **Protocol framework**: VSAbstractProtocol, VSPingPongProtocol (32 tests)
+- **Core components**: VSTask, VSMessage, process management
+- **Event system**: Event handling and registration
+- **Protocol implementations**: PingPong, Raft consensus
+- **Total**: 141 unit tests (headless-compatible)
 
-Total: **132 unit tests** covering critical functionality
+### Protocol Simulation Testing
+DS-Sim includes a framework for testing protocol simulations:
+```bash
+# Interactive test runner (Note: produces GUI errors in headless mode)
+./test-protocols.sh
+```
+
+For detailed testing information, see [docs/testing-guide.md](docs/testing-guide.md).
 
 ### View Test Results
 ```bash

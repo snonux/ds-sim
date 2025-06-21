@@ -3,6 +3,7 @@ package simulator;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -867,6 +868,13 @@ public class VSSimulatorVisualization extends Canvas
      * Paints the simulator.
      */
     public void paint() {
+        // Skip painting in headless mode to avoid GUI errors
+        if (GraphicsEnvironment.isHeadless() || 
+            Boolean.getBoolean("ds.sim.headless") ||
+            !isDisplayable()) {
+            return;
+        }
+        
         while (getBufferStrategy() == null) {
             createBufferStrategy(3);
             strategy = getBufferStrategy();

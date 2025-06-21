@@ -54,6 +54,11 @@ mvn javadoc:javadoc
 ./scripts/beforecommit.sh
 ```
 
+## Development Best Practices
+
+- Always run mvn clean build and fix any compilation errors after every feature change
+- Always run all unit tests and fix all failing ones after every feature change
+
 ## Architecture Overview
 
 This is a distributed systems simulator built on an **event-driven architecture** with clear layered separation:

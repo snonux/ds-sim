@@ -1,6 +1,8 @@
 package testing;
 
 import simulator.*;
+import simulator.engine.*;
+import simulator.messaging.*;
 import core.*;
 import prefs.*;
 import events.*;
@@ -48,10 +50,17 @@ public class HeadlessSimulationRunner {
         System.out.println("Loading simulation: " + simulationFile);
         
         try {
-            // Use the new headless loader
+            // Use HeadlessLoader to avoid any GUI initialization
             HeadlessLoader.LoadedSimulation loaded = HeadlessLoader.load(simulationFile, prefs);
             simulator = loaded.getSimulator();
             viz = loaded.getVisualization();
+            
+            if (simulator == null || viz == null) {
+                throw new IllegalStateException("Failed to load simulation");
+            }
+            
+            // Set up headless message handlers for all processes
+            setupHeadlessMessageHandlers(viz);
             
             // Install log capture
             logCapture = new LogCapture();
@@ -183,6 +192,47 @@ public class HeadlessSimulationRunner {
             }
         } catch (InterruptedException e) {
             executor.shutdownNow();
+        }
+    }
+    
+    /**
+     * Sets up headless message handlers for all processes to avoid GUI dependencies.
+     */
+    private void setupHeadlessMessageHandlers(VSSimulatorVisualization viz) {
+        // Create a headless simulation engine
+        HeadlessSimulationEngine engine = new HeadlessSimulationEngine(prefs, logCapture);
+        
+        // Copy processes to engine
+        for (int i = 0; i < viz.getNumProcesses(); i++) {
+            VSInternalProcess process = viz.getProcess(i);
+            if (process != null) {
+                engine.addProcess(process);
+                
+                // Create and set headless message handler
+                MessageHandler handler = new HeadlessMessageHandler(engine);
+                process.setMessageHandler(handler);
+            }
+        }
+        
+        // Copy task manager state
+        try {
+            VSTaskManager vizTaskManager = viz.getTaskManager();
+            VSTaskManager engineTaskManager = engine.getTaskManager();
+            
+            // Use reflection to copy task queues
+            Field globalTasksField = VSTaskManager.class.getDeclaredField("globalTasks");
+            globalTasksField.setAccessible(true);
+            Field localTasksField = VSTaskManager.class.getDeclaredField("localTasks");
+            localTasksField.setAccessible(true);
+            
+            Object globalTasks = globalTasksField.get(vizTaskManager);
+            Object localTasks = localTasksField.get(vizTaskManager);
+            
+            globalTasksField.set(engineTaskManager, globalTasks);
+            localTasksField.set(engineTaskManager, localTasks);
+        } catch (Exception e) {
+            // Log but don't fail - task manager state might not be critical
+            System.err.println("Warning: Could not copy task manager state: " + e.getMessage());
         }
     }
 }

@@ -1352,7 +1352,10 @@ public class VSSimulator extends JPanel implements VSSerializable {
         menuItemStates.setPause(false);
         menuItemStates.setReset(true);
         menuItemStates.setReplay(true);
-        simulatorFrame.updateSimulatorMenu();
+        // Update simulator menu only if running with GUI
+        if (simulatorFrame != null) {
+            simulatorFrame.updateSimulatorMenu();
+        }
     }
 
     /**
@@ -1415,7 +1418,9 @@ public class VSSimulator extends JPanel implements VSSerializable {
         localPIDComboBox.removeItemAt(index);
 
         processesComboBox.removeItemAt(index);
-        simulatorFrame.updateEditMenu();
+        if (simulatorFrame != null) {
+            simulatorFrame.updateEditMenu();
+        }
 
         updateTaskManagerTable();
     }
@@ -1436,7 +1441,10 @@ public class VSSimulator extends JPanel implements VSSerializable {
         globalPIDComboBox.insertItemAt("PID: " + processID, index);
 
         processesComboBox.insertItemAt(processString + " " + processID, index);
-        simulatorFrame.updateEditMenu();
+        // Update edit menu only if running with GUI
+        if (simulatorFrame != null) {
+            simulatorFrame.updateEditMenu();
+        }
     }
 
     /**

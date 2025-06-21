@@ -259,8 +259,8 @@ class VSRaftProtocolTest {
         
         protocol.onClientStart();
         
-        // Should schedule client requests
-        verify(mockProcess).getTime();
+        // onClientStart is empty for Raft protocol (clients respond to server heartbeats)
+        // So we shouldn't expect any interactions here
         
         // Simulate scheduled client request
         protocol.onClientSchedule();

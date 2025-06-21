@@ -38,6 +38,9 @@ public class VSInternalProcess extends VSAbstractProcess {
     /** The vector clock monitor for timestamp-triggered events */
     private VSVectorClockMonitor vectorClockMonitor;
     
+    /** Optional message handler for decoupled message sending */
+    private simulator.messaging.MessageHandler messageHandler;
+    
     /**
      * Instantiates a new process.
      *
@@ -408,7 +411,22 @@ public class VSInternalProcess extends VSAbstractProcess {
         buffer.append("; ");
         buffer.append(message.toStringFull());
         log(buffer.toString());
-        simulatorVisualization.sendMessage(message);
+        
+        // Use message handler if available (for decoupled operation)
+        if (messageHandler != null) {
+            messageHandler.handleMessage(message);
+        } else {
+            // Fallback to direct visualization call for backward compatibility
+            simulatorVisualization.sendMessage(message);
+        }
+    }
+    
+    /**
+     * Sets the message handler for decoupled message sending.
+     * @param handler the message handler to use
+     */
+    public void setMessageHandler(simulator.messaging.MessageHandler handler) {
+        this.messageHandler = handler;
     }
 
     /**
