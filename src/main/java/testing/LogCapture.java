@@ -62,7 +62,7 @@ public class LogCapture extends VSLogging {
         notifyListeners(entry);
         
         if (printLogs) {
-            System.out.println(logPrefix + entry);
+            System.out.println(String.format("[%5d] %s", time, message));
         }
     }
     
@@ -90,7 +90,8 @@ public class LogCapture extends VSLogging {
         notifyListeners(entry);
         
         if (printLogs) {
-            System.out.println(logPrefix + "[P" + process.getProcessNum() + "] " + message);
+            System.out.println(String.format("[%5d] Process %d: %s", 
+                process.getTime(), process.getProcessNum(), message));
         }
     }
     

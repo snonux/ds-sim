@@ -29,24 +29,26 @@ public class HeadlessProtocolRunner {
         System.out.println("-".repeat(50));
         
         HeadlessSimulationRunner runner = new HeadlessSimulationRunner();
-        runner.setPrintLogs(verbose);
+        runner.setPrintLogs(verbose); // This will print logs in real-time during simulation
+        
+        if (verbose) {
+            System.out.println("\n--- Real-Time Simulation Log Output ---");
+            System.out.println("(Logs show protocol actions as they happen)\n");
+        }
         
         try {
             long startTime = System.currentTimeMillis();
             SimulationResult result = runner.runSimulation(simFile, 5000); // 5 second timeout
             long duration = System.currentTimeMillis() - startTime;
             
+            if (verbose) {
+                System.out.println("--- End of Simulation ---\n");
+            }
+            
             System.out.println("✓ Completed in " + duration + "ms");
             System.out.println("  Processes: " + result.getMetrics().getNumProcesses());
             System.out.println("  Log entries: " + result.getMetrics().getTotalLogCount());
             System.out.println("  Messages per process: " + result.getMetrics().getProcessMessageCounts());
-            
-            if (verbose) {
-                System.out.println("\n--- Log Output ---");
-                for (LogEntry log : result.getAllLogs()) {
-                    System.out.println(log.toString());
-                }
-            }
             
             System.out.println();
         } catch (Exception e) {
@@ -81,7 +83,7 @@ public class HeadlessProtocolRunner {
             System.out.println("-".repeat(50));
             
             HeadlessSimulationRunner runner = new HeadlessSimulationRunner();
-            runner.setPrintLogs(false); // Don't print logs when running all tests
+            runner.setPrintLogs(verbose); // Print logs if verbose mode is enabled
             
             try {
                 long startTime = System.currentTimeMillis();
