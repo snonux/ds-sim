@@ -214,25 +214,9 @@ public class HeadlessSimulationRunner {
             }
         }
         
-        // Copy task manager state
-        try {
-            VSTaskManager vizTaskManager = viz.getTaskManager();
-            VSTaskManager engineTaskManager = engine.getTaskManager();
-            
-            // Use reflection to copy task queues
-            Field globalTasksField = VSTaskManager.class.getDeclaredField("globalTasks");
-            globalTasksField.setAccessible(true);
-            Field localTasksField = VSTaskManager.class.getDeclaredField("localTasks");
-            localTasksField.setAccessible(true);
-            
-            Object globalTasks = globalTasksField.get(vizTaskManager);
-            Object localTasks = localTasksField.get(vizTaskManager);
-            
-            globalTasksField.set(engineTaskManager, globalTasks);
-            localTasksField.set(engineTaskManager, localTasks);
-        } catch (Exception e) {
-            // Log but don't fail - task manager state might not be critical
-            System.err.println("Warning: Could not copy task manager state: " + e.getMessage());
-        }
+        // Note: Task manager state is not copied because:
+        // - Global tasks are in VSTaskManager.globalTasks
+        // - Local tasks are stored in each VSInternalProcess.tasks
+        // - The engine already has references to the processes which contain their tasks
     }
 }
