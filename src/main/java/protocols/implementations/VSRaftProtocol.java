@@ -73,6 +73,10 @@ public class VSRaftProtocol extends VSAbstractProtocol {
     private Integer currentLeader;
     private long lastHeartbeat;
     
+    // Client state
+    private boolean clientHasScheduled = false;
+    private int clientRequestCount = 0;
+    
     /**
      * Log entry structure
      */
@@ -185,19 +189,22 @@ public class VSRaftProtocol extends VSAbstractProtocol {
     
     @Override
     public void onClientInit() {
-        // Clients don't need special initialization for Raft
-        setBoolean("raft.client.enabled", true);
+        // Initialize client state
+        clientHasScheduled = false;
+        clientRequestCount = 0;
     }
     
     @Override
     public void onClientStart() {
-        // Schedule periodic client requests for testing
-        scheduleAt(process.getTime() + 500);
+        // This method is never called when using HAS_ON_SERVER_START
+        // Clients will send requests in response to server heartbeats instead
     }
     
     @Override
     public void onClientReset() {
         removeSchedules();
+        clientHasScheduled = false;
+        clientRequestCount = 0;
     }
     
     @Override
@@ -208,6 +215,13 @@ public class VSRaftProtocol extends VSAbstractProtocol {
             boolean success = message.getBoolean("success");
             String result = message.getString("result");
             raftLog("Client received response: success=" + success + ", result=" + result);
+        } else if (MSG_APPEND_ENTRIES.equals(msgType)) {
+            // Client receives heartbeat from leader - good time to send a request
+            if (!clientHasScheduled) {
+                clientHasScheduled = true;
+                // Schedule first client request after a short delay
+                scheduleAt(process.getTime() + 100);
+            }
         }
     }
     
@@ -221,10 +235,15 @@ public class VSRaftProtocol extends VSAbstractProtocol {
         request.setLong("requestId", System.currentTimeMillis());
         
         sendMessage(request);
-        raftLog("Client sent request: " + request.getString("command"));
+        raftLog("Client sent request #" + clientRequestCount + ": " + request.getString("command"));
         
-        // Schedule next request
-        scheduleAt(process.getTime() + 1000 + process.getRandomPercentage() * 10);
+        // Update request count
+        clientRequestCount++;
+        
+        // Schedule next request after a delay
+        if (clientRequestCount < 10) { // Limit number of requests for testing
+            scheduleAt(process.getTime() + 1000 + process.getRandomPercentage() * 10);
+        }
     }
     
     // --- Raft Algorithm Implementation ---
