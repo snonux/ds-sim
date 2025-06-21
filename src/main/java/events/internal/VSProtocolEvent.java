@@ -187,11 +187,18 @@ public class VSProtocolEvent extends VSAbstractInternalEvent
     }
 
     protected String createShortname(String savedShortname) {
+        // Handle case where this is called during parent deserialization
+        // before our fields are initialized
+        if (protocolClassname == null || prefs == null) {
+            return savedShortname != null ? savedShortname : "Protocol Event";
+        }
+        
         // Always use current localization strings
         String protocolShortname = VSRegisteredEvents.getShortnameByClassname(protocolClassname);
         if (protocolShortname == null) {
             protocolShortname = protocolClassname;
         }
+        
         String clientServer = isClientProtocol ? 
             prefs.getString("lang.client") : 
             prefs.getString("lang.server");
