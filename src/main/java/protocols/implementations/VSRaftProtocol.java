@@ -124,8 +124,9 @@ public class VSRaftProtocol extends VSAbstractProtocol {
     public void onServerStart() {
         // Initialize election timeout and start
         resetElectionTimeout();
-        raftLog("Raft node initialized as FOLLOWER");
+        raftLog("Raft node initialized as FOLLOWER, election timeout=" + electionTimeout);
         scheduleElectionTimeout();
+        raftLog("Scheduled election timeout check");
     }
     
     @Override
@@ -139,6 +140,15 @@ public class VSRaftProtocol extends VSAbstractProtocol {
         String msgType = message.getString("type");
         int term = message.getInteger("term");
         int senderId = message.getSendingProcess().getProcessNum();
+        
+        // Check if this message is intended for us (for unicast messages)
+        if (message.objectExists("receiverNum")) {
+            int receiverNum = message.getInteger("receiverNum");
+            if (receiverNum != process.getProcessNum()) {
+                // Message not for us, ignore it
+                return;
+            }
+        }
         
         // If we receive a message with a higher term, become follower
         if (term > currentTerm) {
@@ -172,12 +182,17 @@ public class VSRaftProtocol extends VSAbstractProtocol {
     public void onServerSchedule() {
         long currentTime = process.getTime();
         
+        raftLog("onServerSchedule called at time " + currentTime + ", state=" + currentState + ", electionTimeout=" + electionTimeout);
+        
         switch (currentState) {
             case FOLLOWER:
             case CANDIDATE:
                 // Check election timeout
                 if (currentTime >= electionTimeout) {
                     startElection();
+                } else {
+                    // Reschedule to check again
+                    scheduleAt(electionTimeout);
                 }
                 break;
             case LEADER:
@@ -256,7 +271,7 @@ public class VSRaftProtocol extends VSAbstractProtocol {
         votesReceived.clear();
         votesReceived.add(process.getProcessNum()); // Vote for self
         
-        raftLog("Starting election for term " + currentTerm);
+        raftLog("Starting election for term " + currentTerm + " (need " + ((getNumProcesses() / 2) + 1) + " votes)");
         
         // Send RequestVote to all other servers
         VSMessage voteRequest = new VSMessage();
@@ -266,6 +281,7 @@ public class VSRaftProtocol extends VSAbstractProtocol {
         voteRequest.setInteger("lastLogIndex", log.size() - 1);
         voteRequest.setInteger("lastLogTerm", log.get(log.size() - 1).term);
         
+        raftLog("Sending vote request to all processes");
         sendMessage(voteRequest);
         
         // Reset election timeout
@@ -277,6 +293,8 @@ public class VSRaftProtocol extends VSAbstractProtocol {
         int term = message.getInteger("term");
         int lastLogIndex = message.getInteger("lastLogIndex");
         int lastLogTerm = message.getInteger("lastLogTerm");
+        
+        raftLog("Received vote request from " + candidateId + " for term " + term);
         
         boolean voteGranted = false;
         
@@ -292,6 +310,8 @@ public class VSRaftProtocol extends VSAbstractProtocol {
             resetElectionTimeout();
             
             raftLog("Voted for candidate " + candidateId + " in term " + term);
+        } else {
+            raftLog("Did not vote for candidate " + candidateId + " (already voted for " + votedFor + ")");
         }
         
         // Send vote response
@@ -303,6 +323,7 @@ public class VSRaftProtocol extends VSAbstractProtocol {
         
         // Send directly to candidate
         response.setInteger("receiverNum", candidateId);
+        raftLog("Sending vote response to " + candidateId + " (granted=" + voteGranted + ")");
         sendMessage(response);
     }
     
