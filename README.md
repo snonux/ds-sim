@@ -10,7 +10,7 @@ DS-Sim is a modern, open-source simulator for distributed systems, written in Ja
 - Event handling
 - Lamport and Vector time implementations
 - Modern Java-based architecture
-- Interactive GUI using JavaFX
+- Interactive GUI using Swing
 - Comprehensive logging and monitoring
 - JSON-based configuration
 
@@ -18,54 +18,6 @@ DS-Sim is a modern, open-source simulator for distributed systems, written in Ja
 
 - Java 21 or higher
 - Maven 3.8 or higher
-
-### Setting up JAVA_HOME on Fedora Linux
-
-If you encounter "JAVA_HOME environment variable is not defined correctly" errors:
-
-#### Method 1: Automatic Setup (Recommended)
-```bash
-# Find and set JAVA_HOME automatically
-export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
-echo $JAVA_HOME  # Should show something like /usr/lib/jvm/java-21-openjdk
-```
-
-#### Method 2: Manual Setup
-```bash
-# Check available Java versions
-alternatives --display java
-
-# Set JAVA_HOME to the current Java installation
-export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
-
-# Or for Java 21 if you have it installed
-export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
-```
-
-#### Method 3: Permanent Setup
-To make JAVA_HOME persistent across sessions, add it to your shell profile:
-
-```bash
-# Add to ~/.bashrc or ~/.zshrc
-echo 'export JAVA_HOME=/usr/lib/jvm/java-21-openjdk' >> ~/.bashrc
-source ~/.bashrc
-
-# Verify it's set correctly
-echo $JAVA_HOME
-java -version
-```
-
-#### Install Java Development Kit (if needed)
-```bash
-# Install OpenJDK 21 (recommended)
-sudo dnf install java-21-openjdk-devel
-
-# Or install OpenJDK 17 (if you need older LTS version)
-sudo dnf install java-17-openjdk-devel
-
-# Install Maven
-sudo dnf install maven
-```
 
 ## Quick Start
 
@@ -75,10 +27,10 @@ git clone https://github.com/yourusername/ds-sim.git
 cd ds-sim
 
 # Set JAVA_HOME if needed (Fedora Linux)
-export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
 
 # Build and run in one step
-mvn clean package && java -jar target/ds-sim-1.0.1-SNAPSHOT.jar
+mvn clean package && java -jar target/ds-sim-*.jar
 ```
 
 ## Building the Project
@@ -118,12 +70,14 @@ mvn clean package -DskipTests
 ```
 
 ### Test Coverage
+
 - **Core components**: VSTask, VSMessage, process management
 - **Event system**: Event handling and registration
 - **Protocol implementations**: PingPong, Two-Phase Commit, Berkeley Time, etc.
 - **Total**: 141 unit tests (headless-compatible)
 
 ### Protocol Simulation Testing
+
 DS-Sim includes a framework for testing protocol simulations:
 ```bash
 # Interactive test runner (Note: produces GUI errors in headless mode)
@@ -133,6 +87,7 @@ DS-Sim includes a framework for testing protocol simulations:
 For detailed testing information, see [docs/testing-guide.md](docs/testing-guide.md).
 
 ### View Test Results
+
 ```bash
 # Test reports are generated in:
 target/surefire-reports/
@@ -142,7 +97,9 @@ cat target/surefire-reports/*.txt
 ```
 
 ### Build Output
+
 After building, you'll find:
+
 - `target/ds-sim-1.0.1-SNAPSHOT.jar` - Executable JAR with all dependencies
 - `target/classes/` - Compiled class files
 - `target/original-ds-sim-1.0.1-SNAPSHOT.jar` - JAR without dependencies
@@ -150,21 +107,10 @@ After building, you'll find:
 ## Running the Application
 
 ### Method 1: Using JAR File (Recommended)
+
 ```bash
 # After building, run the executable JAR
-java -jar target/ds-sim-1.0.1-SNAPSHOT.jar
-```
-
-### Method 2: Direct Maven Execution
-```bash
-# Run without building JAR first
-mvn exec:java
-```
-
-### Method 3: Build and Run Combined
-```bash
-# Build and run in one command
-mvn clean package && java -jar target/ds-sim-1.0.1-SNAPSHOT.jar
+java -jar target/ds-sim-*.jar
 ```
 
 ## Cleaning the Project
@@ -174,14 +120,6 @@ mvn clean package && java -jar target/ds-sim-1.0.1-SNAPSHOT.jar
 # Clean everything Maven generated
 mvn clean
 ```
-
-### What Gets Cleaned
-The `mvn clean` command removes:
-- `target/` directory and all contents
-- Compiled `.class` files
-- Generated JAR files
-- Test reports
-- Dependency cache
 
 ### Force Clean (if needed)
 ```bash
@@ -248,6 +186,7 @@ ds-sim/
 📚 **[Full Documentation Index](docs/index.md)** - Complete list of all documentation
 
 ### Key Documents:
+
 - **[Architecture Guide](docs/architecture.md)** - System design, components, and diagrams
 - **[Developer Guide](docs/developer-guide.md)** - How to create new protocols and events
 - **[Testing Guide](docs/testing-guide.md)** - Comprehensive testing documentation
