@@ -2,6 +2,8 @@
 
 DS-Sim is a modern, open-source simulator for distributed systems, written in Java. It provides a powerful environment for simulating and learning about distributed systems concepts.
 
+![DS-Sim Screenshot](screenshots/screenshot2.png)
+
 ## Features
 
 - Protocol simulation
@@ -118,7 +120,7 @@ mvn clean package -DskipTests
 ### Test Coverage
 - **Core components**: VSTask, VSMessage, process management
 - **Event system**: Event handling and registration
-- **Protocol implementations**: PingPong, Raft consensus
+- **Protocol implementations**: PingPong, Two-Phase Commit, Berkeley Time, etc.
 - **Total**: 141 unit tests (headless-compatible)
 
 ### Protocol Simulation Testing
@@ -232,9 +234,10 @@ ds-sim/
 │       │   └── utils/      # Utilities and helpers
 │       └── resources/      # Configuration files
 ├── docs/                   # Documentation
-│   ├── ARCHITECTURE.md     # System architecture and design
-│   ├── DEVELOPER_GUIDE.md  # Guide for extending DS-Sim
-│   └── TIMESTAMP_EVENTS_GUIDE.md # Timestamp event system
+│   ├── index.md           # Documentation index
+│   ├── architecture.md    # System architecture and design
+│   ├── developer-guide.md # Guide for extending DS-Sim
+│   └── testing-guide.md   # Comprehensive testing guide
 ├── saved-simulations/      # Example simulation files
 ├── scripts/               # Development scripts
 └── pom.xml               # Maven configuration
@@ -242,10 +245,13 @@ ds-sim/
 
 ## Documentation
 
-- **[Architecture Guide](docs/ARCHITECTURE.md)** - System design, components, and diagrams
-- **[Developer Guide](docs/DEVELOPER_GUIDE.md)** - How to create new protocols and events
-- **[Timestamp Events Guide](docs/TIMESTAMP_EVENTS_GUIDE.md)** - Using timestamp-triggered events
-- **[CLAUDE.md](CLAUDE.md)** - Build commands and project overview
+📚 **[Full Documentation Index](docs/index.md)** - Complete list of all documentation
+
+### Key Documents:
+- **[Architecture Guide](docs/architecture.md)** - System design, components, and diagrams
+- **[Developer Guide](docs/developer-guide.md)** - How to create new protocols and events
+- **[Testing Guide](docs/testing-guide.md)** - Comprehensive testing documentation
+- **[Timestamp Events Guide](docs/timestamp-events-guide.md)** - Using timestamp-triggered events
 
 ## Contributing
 
