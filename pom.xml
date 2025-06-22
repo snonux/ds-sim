@@ -88,11 +88,9 @@
                         <include>**/events/**/*Test.java</include>
                         <include>**/protocols/VSAbstractProtocolTest.java</include>
                         <include>**/protocols/implementations/VSPingPongProtocolTest.java</include>
-                        <include>**/protocols/implementations/VSRaftProtocolTest.java</include>
                     </includes>
                     <excludes>
                         <!-- Exclude all GUI and headless simulation tests -->
-                        <exclude>**/SimpleRaftGUITest.java</exclude>
                         <exclude>**/testing/**/*Test.java</exclude>
                     </excludes>
                     <systemPropertyVariables>
@@ -198,11 +196,9 @@
                                 <include>**/events/*Test.java</include>
                                 <include>**/protocols/VSAbstractProtocolTest.java</include>
                                 <include>**/protocols/implementations/VSPingPongProtocolTest.java</include>
-                                <include>**/protocols/implementations/VSRaftProtocolTest.java</include>
-                            </includes>
+                                    </includes>
                             <excludes>
-                                <exclude>**/SimpleRaftGUITest.java</exclude>
-                                <exclude>**/testing/**/*Test.java</exclude>
+                                        <exclude>**/testing/**/*Test.java</exclude>
                             </excludes>
                         </configuration>
                     </plugin>

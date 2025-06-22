@@ -351,7 +351,6 @@ public class SimulationBuilder {
      * Fluent API for common protocol setups
      */
     public static class Protocols {
-        public static final String RAFT = "protocols.implementations.VSRaftProtocol";
         public static final String PING_PONG = "protocols.implementations.VSPingPongProtocol";
         public static final String BERKLEY_TIME = "protocols.implementations.VSBerkelyTimeProtocol";
         public static final String BROADCAST = "protocols.implementations.VSBroadcastProtocol";

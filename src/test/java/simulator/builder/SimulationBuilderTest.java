@@ -29,43 +29,6 @@ class SimulationBuilderTest {
         }
     }
     
-    @Test
-    void testCreateBasicRaftSimulation() throws Exception {
-        String filename = TEST_DIR + "test-raft.dat";
-        
-        // Create a basic Raft simulation
-        new SimulationBuilder()
-            .withProcesses(3)
-            .withProtocol(SimulationBuilder.Protocols.RAFT)
-            .activateServers(0, 1, 2)
-            .save(filename);
-        
-        // Verify file was created
-        File file = new File(filename);
-        assertTrue(file.exists(), "Simulation file should be created");
-        assertTrue(file.length() > 1000, "File should have content");
-        
-        // Verify it contains Raft protocol
-        String content = Files.readString(file.toPath());
-        assertTrue(content.contains("VSRaftProtocol"), "Should contain Raft protocol classname");
-    }
-    
-    @Test
-    void testCreateRaftWithClients() throws Exception {
-        String filename = TEST_DIR + "test-raft-clients.dat";
-        
-        // Use factory method
-        SimulationFactory.createRaftSimulation(3, 2)
-            .save(filename);
-        
-        // Verify file was created
-        File file = new File(filename);
-        assertTrue(file.exists(), "Simulation file should be created");
-        
-        // Should have 5 processes (3 servers + 2 clients)
-        String content = Files.readString(file.toPath());
-        assertTrue(content.contains("VSRaftProtocol"), "Should contain Raft protocol");
-    }
     
     @Test
     void testCreatePingPongSimulation() throws Exception {
@@ -88,7 +51,7 @@ class SimulationBuilderTest {
         // Create a complex simulation with events
         new SimulationBuilder()
             .withProcesses(5)
-            .withProtocol(SimulationBuilder.Protocols.RAFT)
+            .withProtocol(SimulationBuilder.Protocols.TWO_PHASE_COMMIT)
             .withDuration(30000)
             .activateServers(0, 1, 2)
             .activateClients(1000, 3, 4)
@@ -109,7 +72,6 @@ class SimulationBuilderTest {
     void testAllProtocolTypes() throws Exception {
         // Test that all protocol constants work
         String[] protocols = {
-            SimulationBuilder.Protocols.RAFT,
             SimulationBuilder.Protocols.PING_PONG,
             SimulationBuilder.Protocols.BERKLEY_TIME,
             SimulationBuilder.Protocols.BROADCAST,
@@ -136,10 +98,6 @@ class SimulationBuilderTest {
     @Test
     void testInvalidConfiguration() {
         // Test that invalid configurations throw exceptions
-        assertThrows(IllegalArgumentException.class, () -> {
-            SimulationFactory.createRaftSimulation(2, 0); // Too few servers
-        });
-        
         assertThrows(IllegalArgumentException.class, () -> {
             SimulationFactory.createBerkeleyTimeSimulation(1); // Too few processes
         });

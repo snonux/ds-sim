@@ -8,38 +8,6 @@ import java.util.stream.IntStream;
  */
 public class SimulationFactory {
     
-    /**
-     * Create a standard Raft consensus simulation
-     * @param numServers Number of Raft servers (minimum 3 for consensus)
-     * @param numClients Number of client processes
-     * @return Configured SimulationBuilder
-     */
-    public static SimulationBuilder createRaftSimulation(int numServers, int numClients) throws Exception {
-        if (numServers < 3) {
-            throw new IllegalArgumentException("Raft requires at least 3 servers for consensus");
-        }
-        
-        return new SimulationBuilder()
-            .withProcesses(numServers + numClients)
-            .withProtocol(SimulationBuilder.Protocols.RAFT)
-            .withDuration(15000) // 15 seconds to see leader election
-            .activateServers(IntStream.range(0, numServers).toArray())
-            .activateClients(500, IntStream.range(numServers, numServers + numClients).toArray());
-    }
-    
-    /**
-     * Create a Raft simulation with fault tolerance testing
-     * @param numServers Number of Raft servers
-     * @return Configured SimulationBuilder with crash/recovery events
-     */
-    public static SimulationBuilder createRaftFaultToleranceSimulation(int numServers) throws Exception {
-        return createRaftSimulation(numServers, 0)
-            .withDuration(30000) // 30 seconds for fault testing
-            .addCrashEvent(0, 5000)    // Crash leader after 5s
-            .addRecoveryEvent(0, 10000) // Recover after 10s
-            .addCrashEvent(1, 15000)    // Crash another server
-            .addRecoveryEvent(1, 20000); // Recover after 20s
-    }
     
     /**
      * Create a simple ping-pong simulation
