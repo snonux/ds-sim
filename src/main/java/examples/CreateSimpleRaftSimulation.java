@@ -11,8 +11,9 @@ import java.io.*;
 
 /**
  * Creates a simple working Raft simulation.
- * The key insight: Raft protocol uses HAS_ON_SERVER_START, so servers
- * automatically start when activated. We just need to activate them!
+ * The key insight: Raft protocol uses HAS_ON_SERVER_START, so when servers
+ * are activated via VSProtocolEvent, the protocol's onServerStart() method
+ * will be called automatically.
  */
 public class CreateSimpleRaftSimulation {
     

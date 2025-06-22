@@ -695,6 +695,17 @@ public abstract class VSAbstractProcess extends VSSerializablePrefs {
 
         for (int i = 0; i < numProtocols; ++i) {
             String protocolClassname = (String) objectInputStream.readObject();
+            if (protocolClassname == null || protocolClassname.trim().isEmpty()) {
+                // Handle saved files with null protocol classnames
+                // This can happen if the protocol didn't call setClassname() when it was saved
+                System.err.println("Warning: Found null/empty protocol classname during deserialization, skipping...");
+                // We still need to read the protocol's serialized data to keep the stream in sync
+                // Create a dummy protocol to consume the data
+                VSAbstractProtocol dummyProtocol = new protocols.implementations.VSDummyProtocol();
+                dummyProtocol.init((VSInternalProcess)this);
+                dummyProtocol.deserialize(serialize, objectInputStream);
+                continue;
+            }
             VSAbstractProtocol protocol = getProtocolObject_(protocolClassname);
             protocol.deserialize(serialize, objectInputStream);
         }

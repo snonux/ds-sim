@@ -50,6 +50,21 @@ public class HeadlessProtocolRunner {
             System.out.println("  Log entries: " + result.getMetrics().getTotalLogCount());
             System.out.println("  Messages per process: " + result.getMetrics().getProcessMessageCounts());
             
+            // Count total messages sent
+            int totalMessages = result.getMetrics().getTotalMessageCount();
+            System.out.println("  Total messages sent: " + totalMessages);
+            
+            // Check if any messages were sent
+            if (totalMessages == 0) {
+                System.err.println("\n⚠️  WARNING: No messages were sent during simulation!");
+                System.err.println("   This indicates the protocol may not be functioning correctly.");
+                if (!verbose) {
+                    System.err.println("   Re-run with -Dds.sim.verbose=true for detailed output.");
+                }
+                // Mark as failure
+                throw new RuntimeException("Protocol test failed: No messages sent");
+            }
+            
             System.out.println();
         } catch (Exception e) {
             System.err.println("✗ FAILED: " + e.getMessage());

@@ -38,12 +38,7 @@ public class HeadlessSimulationEngine extends AbstractSimulationEngine {
         VSInternalProcess sendingProcess = (VSInternalProcess) message.getSendingProcess();
         boolean recvOwn = prefs.getBoolean("sim.message.own.recv");
         
-        // Debug logging
-        if (loging != null) {
-            loging.log("Message " + message.getMessageID() + " scheduled for delivery at time " + 
-                      deliveryTime + " (sent at globalTime=" + sendingProcess.getGlobalTime() + 
-                      ", duration=" + (deliveryTime - sendingProcess.getGlobalTime()) + "ms)");
-        }
+        // Debug logging removed to avoid affecting test behavior
         
         // Schedule delivery to all processes
         for (VSInternalProcess receiverProcess : processes) {
@@ -57,7 +52,13 @@ public class HeadlessSimulationEngine extends AbstractSimulationEngine {
             // Create receive event for this process
             VSMessageReceiveEvent receiveEvent = new VSMessageReceiveEvent(message);
             VSTask task = new VSTask(deliveryTime, receiverProcess, receiveEvent, VSTask.GLOBAL);
-            taskManager.addTask(task);
+            
+            // Important: Use the task manager from the receiving process's simulator canvas
+            // This ensures tasks are added to the correct task manager that's being run
+            VSTaskManager actualTaskManager = receiverProcess.getSimulatorCanvas().getTaskManager();
+            actualTaskManager.addTask(task);
+            
+            // Debug logging removed
         }
     }
     

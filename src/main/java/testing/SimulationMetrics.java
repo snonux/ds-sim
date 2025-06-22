@@ -44,4 +44,10 @@ public class SimulationMetrics {
             
         return (double) totalProcessMessages / numProcesses;
     }
+    
+    public int getTotalMessageCount() {
+        return processMessageCounts.values().stream()
+            .mapToInt(Integer::intValue)
+            .sum();
+    }
 }

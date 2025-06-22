@@ -26,7 +26,15 @@ public abstract class BaseProtocolTest {
      */
     protected SimulationResult runSimulation(String file, long duration) {
         try {
-            return runner.runSimulation(file, duration);
+            SimulationResult result = runner.runSimulation(file, duration);
+            
+            // Check if any messages were sent
+            int totalMessages = result.getMetrics().getTotalMessageCount();
+            if (totalMessages == 0) {
+                throw new AssertionError("Protocol test failed: No messages were sent during simulation of " + file);
+            }
+            
+            return result;
         } catch (Exception e) {
             throw new RuntimeException("Failed to run simulation: " + file, e);
         }

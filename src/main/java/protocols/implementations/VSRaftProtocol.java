@@ -100,6 +100,7 @@ public class VSRaftProtocol extends VSAbstractProtocol {
     
     public VSRaftProtocol() {
         super(VSAbstractProtocol.HAS_ON_SERVER_START);
+        setClassname(getClass().toString());
     }
     
     @Override

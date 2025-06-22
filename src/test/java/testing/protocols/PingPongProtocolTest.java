@@ -31,7 +31,8 @@ public class PingPongProtocolTest {
         ProtocolVerifier verifier = new ProtocolVerifier()
             .expectLogExactly("Ping-Pong.*activated", 2)
             .expectLog("Ping-Pong Client activated")
-            .expectLog("Ping-Pong Server activated");
+            .expectLog("Ping-Pong Server activated")
+            .expectMessages();  // Ensure messages are sent
             
         VerificationResult verification = verifier.verify(result.getAllLogs());
         

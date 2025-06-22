@@ -26,6 +26,11 @@ public class HeadlessSimulationRunner {
     public HeadlessSimulationRunner() {
         this.prefs = new VSDefaultPrefs();
         this.prefs.fillWithDefaults();
+        
+        // Set reasonable message delays for testing (10-50ms instead of 500-2000ms)
+        this.prefs.initLong("message.sendingtime.min", 10);
+        this.prefs.initLong("message.sendingtime.max", 50);
+        
         VSRegisteredEvents.init(prefs);
         this.executor = Executors.newSingleThreadExecutor();
     }
@@ -55,20 +60,29 @@ public class HeadlessSimulationRunner {
             simulator = loaded.getSimulator();
             viz = loaded.getVisualization();
             
+            // Update message delays on all processes after loading
+            for (int i = 0; i < viz.getNumProcesses(); i++) {
+                VSInternalProcess process = viz.getProcess(i);
+                if (process != null) {
+                    process.initLong("message.sendingtime.min", 10);
+                    process.initLong("message.sendingtime.max", 50);
+                }
+            }
+            
             if (simulator == null || viz == null) {
                 throw new IllegalStateException("Failed to load simulation");
             }
             
-            // Set up headless message handlers for all processes
-            setupHeadlessMessageHandlers(viz);
-            
-            // Install log capture
+            // Install log capture first
             logCapture = new LogCapture();
             logCapture.setPrintLogs(printLogs);
             if (listener != null) {
                 logCapture.addListener(listener);
             }
             installLogCapture();
+            
+            // Set up headless message handlers for all processes (after log capture is ready)
+            setupHeadlessMessageHandlers(viz);
             
             // Get the simulation's configured end time
             long untilTime = viz.getUntilTime();
@@ -187,10 +201,11 @@ public class HeadlessSimulationRunner {
                 lastActiveTime = currentTime;
             } else {
                 noActivityCount++;
-                // If no activity for 3000ms (3 seconds) of simulation time, stop
-                // This accounts for message delivery times of 500-2000ms plus some buffer
-                if (noActivityCount > 3000 && (currentTime - lastActiveTime) > 3000) {
-                    System.out.println("No activity detected for 3 seconds - simulation complete at time " + simulatorTime);
+                // If no activity for 5000ms (5 seconds) of simulation time, stop
+                // This accounts for message delivery times of 500-2000ms plus extra buffer
+                // to ensure all messages are delivered
+                if (noActivityCount > 5000 && (currentTime - lastActiveTime) > 5000) {
+                    System.out.println("No activity detected for 5 seconds - simulation complete at time " + simulatorTime);
                     break;
                 }
             }
@@ -208,10 +223,19 @@ public class HeadlessSimulationRunner {
     
     private boolean hasPendingActivity(VSTaskManager taskManager, Field globalTasksField, long currentTime) {
         try {
-            // Check global tasks
+            // Check global tasks - but also check if any are scheduled for future times
             Queue<?> globalTasks = (Queue<?>) globalTasksField.get(taskManager);
             if (globalTasks != null && !globalTasks.isEmpty()) {
-                return true; // If any global tasks exist, keep running
+                // Check if any tasks are scheduled for the future
+                for (Object obj : globalTasks) {
+                    VSTask task = (VSTask) obj;
+                    if (task.getTaskTime() > currentTime) {
+                        // There's a future task scheduled, keep running
+                        return true;
+                    }
+                }
+                // If all tasks are in the past or present, they should execute now
+                return true;
             }
             
             // Check process-specific tasks
@@ -220,12 +244,19 @@ public class HeadlessSimulationRunner {
                 if (process != null) {
                     Queue<VSTask> tasks = process.getTasks();
                     if (tasks != null && !tasks.isEmpty()) {
-                        return true; // If any process tasks exist, keep running
+                        // Check if any tasks are scheduled for the future
+                        for (VSTask task : tasks) {
+                            if (task.getTaskTime() > process.getTime()) {
+                                return true;
+                            }
+                        }
+                        // If all tasks are ready to run, keep going
+                        return true;
                     }
                 }
             }
             
-            // Check for messages in transit
+            // Check for messages in transit (visualization lines)
             Field messageLinesField = VSSimulatorVisualization.class.getDeclaredField("messageLines");
             messageLinesField.setAccessible(true);
             LinkedList<?> messageLines = (LinkedList<?>) messageLinesField.get(viz);

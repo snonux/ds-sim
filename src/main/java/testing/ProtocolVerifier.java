@@ -80,6 +80,29 @@ public class ProtocolVerifier {
     }
     
     /**
+     * Expect at least n messages to be sent during the simulation.
+     */
+    public ProtocolVerifier expectAtLeastNMessages(int minMessages) {
+        rules.add(new MessageCountRule(minMessages, Integer.MAX_VALUE));
+        return this;
+    }
+    
+    /**
+     * Expect exactly n messages to be sent during the simulation.
+     */
+    public ProtocolVerifier expectExactlyNMessages(int count) {
+        rules.add(new MessageCountRule(count, count));
+        return this;
+    }
+    
+    /**
+     * Expect messages to be sent (at least 1).
+     */
+    public ProtocolVerifier expectMessages() {
+        return expectAtLeastNMessages(1);
+    }
+    
+    /**
      * Verify all rules against the provided logs.
      */
     public VerificationResult verify(List<LogEntry> logs) {
@@ -238,6 +261,48 @@ public class ProtocolVerifier {
             );
             
             return new RuleResult(passed, message, matches);
+        }
+    }
+    
+    /**
+     * Rule that verifies message count.
+     */
+    private static class MessageCountRule implements VerificationRule {
+        private final int minCount;
+        private final int maxCount;
+        private final String description;
+        
+        public MessageCountRule(int minCount, int maxCount) {
+            this.minCount = minCount;
+            this.maxCount = maxCount;
+            this.description = String.format(
+                "Message count should be %s",
+                minCount == maxCount ? 
+                    String.valueOf(minCount) : 
+                    minCount + "-" + (maxCount == Integer.MAX_VALUE ? "∞" : maxCount)
+            );
+        }
+        
+        @Override
+        public RuleResult verify(List<LogEntry> logs) {
+            int messageCount = 0;
+            List<LogEntry> messageLogs = new ArrayList<>();
+            
+            // Count all "Message sent" logs
+            for (LogEntry log : logs) {
+                if (log.getMessage().contains("Message sent")) {
+                    messageCount++;
+                    messageLogs.add(log);
+                }
+            }
+            
+            boolean passed = messageCount >= minCount && messageCount <= maxCount;
+            String message = String.format(
+                "%s (found %d messages)",
+                description, messageCount
+            );
+            
+            return new RuleResult(passed, message, messageLogs);
         }
     }
 }

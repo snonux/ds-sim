@@ -5,6 +5,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 import core.VSInternalProcess;
+import core.VSTask;
+import core.VSTaskManager;
 import events.VSAbstractEvent;
 import events.VSCopyableEvent;
 import events.VSRegisteredEvents;
@@ -106,6 +108,47 @@ public class VSProtocolEvent extends VSAbstractInternalEvent
     public void setProtocolClassname(String protocolClassname) {
         this.protocolClassname = protocolClassname;
     }
+    
+    /**
+     * Checks if we should schedule a protocol start task.
+     * We should NOT schedule if the protocol is already scheduled at the current time.
+     * This prevents duplicate execution when loading saved simulations.
+     *
+     * @param process the process to check
+     * @param protocol the protocol to check for
+     * @return true if we should schedule, false if already scheduled
+     */
+    private boolean shouldScheduleProtocolStart(VSInternalProcess process, VSAbstractProtocol protocol) {
+        // Check process-local tasks
+        for (VSTask task : process.getTasks()) {
+            if (task.getEvent() == protocol && task.getTaskTime() == process.getTime()) {
+                // Protocol is already scheduled at this time
+                return false;
+            }
+        }
+        
+        // Check global tasks  
+        VSTaskManager taskManager = process.getSimulatorCanvas().getTaskManager();
+        try {
+            // Use reflection to access global tasks
+            java.lang.reflect.Field globalTasksField = VSTaskManager.class.getDeclaredField("globalTasks");
+            globalTasksField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            java.util.Queue<VSTask> globalTasks = (java.util.Queue<VSTask>) globalTasksField.get(taskManager);
+            
+            for (VSTask task : globalTasks) {
+                if (task.getEvent() == protocol && task.getTaskTime() == process.getGlobalTime()) {
+                    // Protocol is already scheduled at this time
+                    return false;
+                }
+            }
+        } catch (Exception e) {
+            // If we can't check, assume we should schedule
+            System.err.println("Warning: Could not check for duplicate protocol tasks: " + e.getMessage());
+        }
+        
+        return true;
+    }
 
     /* (non-Javadoc)
      * @see events.VSAbstractEvent#onStart()
@@ -137,6 +180,22 @@ public class VSProtocolEvent extends VSAbstractInternalEvent
                       : prefs.getString("lang.deactivated"));
 
         log(buffer.toString());
+        
+        // If this is an activation, schedule the protocol to start immediately
+        // This ensures that protocols with HAS_ON_SERVER_START or HAS_ON_CLIENT_START
+        // will have their onServerStart() or onClientStart() methods called
+        // 
+        // However, we should NOT schedule if the protocol is already scheduled to run.
+        // This can happen when loading from a saved simulation where both the activation
+        // event and the resulting protocol task were saved.
+        if (isProtocolActivation && shouldScheduleProtocolStart(internalProcess, protocol)) {
+            // Create a task to start the protocol at the current time
+            VSTask startTask = new VSTask(internalProcess.getTime(), 
+                                         internalProcess, 
+                                         protocol, 
+                                         VSTask.LOCAL);
+            internalProcess.getSimulatorCanvas().getTaskManager().addTask(startTask);
+        }
     }
 
     /* (non-Javadoc)

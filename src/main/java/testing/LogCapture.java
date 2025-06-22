@@ -30,6 +30,17 @@ public class LogCapture extends VSLogging {
         this.printLogs = printLogs;
     }
     
+    public void setSimulatorCanvas(VSSimulatorVisualization viz) {
+        // Store reference for process count
+        try {
+            Field field = VSLogging.class.getDeclaredField("simulatorVisualization");
+            field.setAccessible(true);
+            field.set(this, viz);
+        } catch (Exception e) {
+            // Ignore
+        }
+    }
+    
     public void setLogPrefix(String prefix) {
         this.logPrefix = prefix;
     }
@@ -136,9 +147,23 @@ public class LogCapture extends VSLogging {
     
     public Map<Integer, Integer> getProcessMessageCounts() {
         Map<Integer, Integer> counts = new HashMap<>();
-        for (Map.Entry<Integer, List<LogEntry>> entry : processLogs.entrySet()) {
-            counts.put(entry.getKey(), entry.getValue().size());
+        
+        // Initialize counts for all processes
+        VSSimulatorVisualization viz = getSimulatorVisualization();
+        if (viz != null) {
+            for (int i = 0; i < viz.getNumProcesses(); i++) {
+                counts.put(i, 0);
+            }
         }
+        
+        // Count messages from all captured logs
+        for (LogEntry log : capturedLogs) {
+            if (log.getMessage().contains("Message sent")) {
+                int processNum = log.getProcessNum();
+                counts.put(processNum, counts.getOrDefault(processNum, 0) + 1);
+            }
+        }
+        
         return counts;
     }
     

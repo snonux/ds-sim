@@ -32,7 +32,8 @@ public class BroadcastProtocolTest {
         ProtocolVerifier verifier = new ProtocolVerifier()
             .expectLog("Broadcast.*activated")
             .expectNoLog("ERROR")
-            .expectNoLog("Exception");
+            .expectNoLog("Exception")
+            .expectMessages();  // Broadcast must send messages
             
         VerificationResult verification = verifier.verify(result.getAllLogs());
         
