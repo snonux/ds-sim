@@ -28,18 +28,12 @@
     <include>**/events/**/*Test.java</include>
     <include>**/protocols/VSAbstractProtocolTest.java</include>
     <include>**/protocols/implementations/VSPingPongProtocolTest.java</include>
-    <include>**/protocols/implementations/VSRaftProtocolTest.java</include>
 </includes>
 <excludes>
     <!-- Exclude all GUI and headless simulation tests -->
-    <exclude>**/SimpleRaftGUITest.java</exclude>
     <exclude>**/testing/**/*Test.java</exclude>
 </excludes>
 ```
-
-### 4. Fixed Failing Test
-- Fixed `VSRaftProtocolTest.testClientBehavior` which was expecting behavior that doesn't exist
-- The test was expecting `getTime()` to be called in `onClientStart()`, but the Raft protocol's client start method is empty
 
 ## Results
 - ✅ `mvn clean package` now builds successfully
@@ -71,7 +65,7 @@ mvn test -Punit-tests-only
 
 ### Run GUI tests separately (requires display):
 ```bash
-mvn test -Dtest="**/SimpleRaftGUITest,**/testing/**/*Test"
+mvn test -Dtest="**/testing/**/*Test"
 ```
 
 ## Notes

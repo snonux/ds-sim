@@ -46,10 +46,8 @@ This document describes the current test infrastructure and available test utili
     <include>**/events/**/*Test.java</include>
     <include>**/protocols/VSAbstractProtocolTest.java</include>
     <include>**/protocols/implementations/VSPingPongProtocolTest.java</include>
-    <include>**/protocols/implementations/VSRaftProtocolTest.java</include>
 </includes>
 <excludes>
-    <exclude>**/SimpleRaftGUITest.java</exclude>
     <exclude>**/testing/**/*Test.java</exclude>
 </excludes>
 ```

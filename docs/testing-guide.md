@@ -20,7 +20,7 @@ This runs tests for:
 - Core components (`core/*Test.java`)
 - Event system (`events/**/*Test.java`)
 - Protocol abstractions (`protocols/VSAbstractProtocolTest.java`)
-- Specific protocols (PingPong, Raft)
+- Specific protocols (PingPong, TwoPhaseCommit)
 
 ### Protocol Simulation Tests
 
@@ -128,10 +128,8 @@ The project is configured to run only unit tests by default:
             <include>**/events/**/*Test.java</include>
             <include>**/protocols/VSAbstractProtocolTest.java</include>
             <include>**/protocols/implementations/VSPingPongProtocolTest.java</include>
-            <include>**/protocols/implementations/VSRaftProtocolTest.java</include>
         </includes>
         <excludes>
-            <exclude>**/SimpleRaftGUITest.java</exclude>
             <exclude>**/testing/**/*Test.java</exclude>
         </excludes>
     </configuration>

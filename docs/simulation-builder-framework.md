@@ -13,7 +13,7 @@ The core builder class that provides a fluent API for creating simulations:
 ```java
 new SimulationBuilder()
     .withProcesses(5)
-    .withProtocol("protocols.implementations.VSRaftProtocol")
+    .withProtocol("protocols.implementations.VSTwoPhaseCommitProtocol")
     .withDuration(20000)
     .activateServers(0, 1, 2)
     .activateClients(1000, 3, 4)
@@ -27,15 +27,7 @@ new SimulationBuilder()
 Factory methods for common simulation patterns:
 
 ```java
-// Create a standard 3-server Raft cluster
-SimulationFactory.createRaftSimulation(3, 0)
-    .save("saved-simulations/raft.dat");
-
-// Create a Raft cluster with fault tolerance testing
-SimulationFactory.createRaftFaultToleranceSimulation(5)
-    .save("saved-simulations/raft-fault-tolerant.dat");
-
-// Other protocols
+// Create common simulation patterns
 SimulationFactory.createPingPongSimulation(2);
 SimulationFactory.createBerkeleyTimeSimulation(4);
 SimulationFactory.createTwoPhaseCommitSimulation(3);
@@ -85,13 +77,13 @@ The framework:
 
 ## Usage Examples
 
-### Basic Raft Simulation
+### Basic Two-Phase Commit Simulation
 ```java
 new SimulationBuilder()
     .withProcesses(3)
-    .withProtocol(SimulationBuilder.Protocols.RAFT)
+    .withProtocol(SimulationBuilder.Protocols.TWO_PHASE_COMMIT)
     .activateServers(0, 1, 2)
-    .save("saved-simulations/raft.dat");
+    .save("saved-simulations/2pc.dat");
 ```
 
 ### Complex Scenario
@@ -106,17 +98,17 @@ new SimulationBuilder()
     .addRecoveryEvent(2, 8000)       // Server 2 recovers
     .addCrashEvent(0, 10000)         // Leader crashes
     .addRecoveryEvent(0, 12000)      // Leader recovers
-    .save("saved-simulations/raft-complex.dat");
+    .save("saved-simulations/complex-scenario.dat");
 ```
 
 ## Created Simulations
 
-Using this framework, we successfully created:
+Using this framework, you can create:
 
-1. **raft.dat** - Basic 3-node Raft cluster
-2. **raft-with-clients.dat** - Raft with 3 servers and 2 clients  
-3. **raft-fault-tolerant.dat** - 5 servers with crash/recovery events
-4. **raft-complex.dat** - 7 processes with complex fault scenarios
+1. **ping-pong.dat** - Basic 2-node ping-pong communication
+2. **2pc.dat** - Two-phase commit with coordinator and participants  
+3. **broadcast.dat** - Reliable broadcast protocol simulation
+4. **berkley-time.dat** - Berkeley time synchronization
 
 ## Verification
 
