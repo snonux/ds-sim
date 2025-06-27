@@ -1,6 +1,6 @@
 # DS-Sim
 
-DS-Sim is a modern, open-source simulator for distributed systems, written in Java. It provides a powerful environment for simulating and learning about distributed systems concepts.
+DS-Sim is a open-source simulator for distributed systems, written in Java. It provides a powerful environment for simulating and learning about distributed systems concepts.
 
 ![DS-Sim Screenshot](screenshots/screenshot2.png)
 
