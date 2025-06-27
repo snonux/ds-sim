@@ -11,8 +11,8 @@ DS-Sim is a modern, open-source simulator for distributed systems, written in Ja
 - Lamport and Vector time implementations
 - Modern Java-based architecture
 - Interactive GUI using Swing
-- Comprehensive logging and monitoring
-- JSON-based configuration
+- Comprehensive logging
+
 
 ## Requirements
 
