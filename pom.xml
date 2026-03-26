@@ -20,6 +20,7 @@
         <mockito.version>5.3.1</mockito.version>
         <slf4j.version>2.0.7</slf4j.version>
         <logback.version>1.4.7</logback.version>
+        <surefire.argLine>-Dnet.bytebuddy.experimental=true</surefire.argLine>
     </properties>
 
     <build>
@@ -82,6 +83,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.1.2</version>
                 <configuration>
+                    <argLine>${surefire.argLine}</argLine>
                     <includes>
                         <!-- Only include tests that work in headless mode -->
                         <include>**/core/*Test.java</include>
@@ -188,6 +190,7 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
+                            <argLine>${surefire.argLine}</argLine>
                             <includes>
                                 <include>**/core/*Test.java</include>
                                 <include>**/events/*Test.java</include>
