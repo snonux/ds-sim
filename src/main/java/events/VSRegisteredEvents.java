@@ -96,6 +96,7 @@ public final class VSRegisteredEvents {
         registerEvent("protocols.implementations.VSInternalTimeSyncProtocol");
         registerEvent("protocols.implementations.VSOnePhaseCommitProtocol");
         registerEvent("protocols.implementations.VSPingPongProtocol");
+        registerEvent("protocols.implementations.VSRaftProtocol");
         registerEvent("protocols.implementations.VSReliableMulticastProtocol");
         registerEvent("protocols.implementations.VSTwoPhaseCommitProtocol");
         registerEvent("protocols.implementations.VSTimestampDemoProtocol");
