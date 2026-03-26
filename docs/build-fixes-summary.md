@@ -48,8 +48,8 @@ BUILD SUCCESS
 ```
 
 ## Created Files
-- `target/ds-sim-1.0.1-SNAPSHOT.jar` (3.9 MB) - Shaded JAR with all dependencies
-- `target/original-ds-sim-1.0.1-SNAPSHOT.jar` (771 KB) - Original JAR without dependencies
+- `target/ds-sim-1.0.1.jar` (3.9 MB) - Shaded JAR with all dependencies
+- `target/original-ds-sim-1.0.1.jar` (771 KB) - Original JAR without dependencies
 
 ## Running Tests
 

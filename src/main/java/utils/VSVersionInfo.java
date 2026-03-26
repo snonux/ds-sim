@@ -52,7 +52,7 @@ public final class VSVersionInfo {
     /**
      * Gets the application version from Maven project version.
      * 
-     * @return the version string (e.g., "1.0.1-SNAPSHOT")
+     * @return the version string (e.g., "1.0.1")
      */
     public static String getVersion() {
         if (!loaded) {
@@ -100,7 +100,7 @@ public final class VSVersionInfo {
     /**
      * Gets the full version string including name and version.
      * 
-     * @return formatted version string (e.g., "Distributed Systems Simulator 1.0.1-SNAPSHOT")
+     * @return formatted version string (e.g., "Distributed Systems Simulator 1.0.1")
      */
     public static String getFullVersionString() {
         return String.format("Distributed Systems Simulator %s", getVersion());
