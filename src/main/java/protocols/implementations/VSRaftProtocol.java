@@ -166,6 +166,7 @@ public class VSRaftProtocol extends VSAbstractProtocol {
      * @param newLeaderId the known leader in that term, or -1 if unknown
      */
     private void becomeFollower(int term, int newLeaderId) {
+        clearServerSchedules();
         isLeader = false;
         isCandidate = false;
         currentTerm = term;
@@ -181,9 +182,24 @@ public class VSRaftProtocol extends VSAbstractProtocol {
     private void resetElectionTimeout() {
         long jitterPercentage = Math.abs(process.getRandomPercentage());
         long jitter = (getLong("electionJitter") * jitterPercentage) / 100L;
+        boolean previousContextIsServer = currentContextIsServer();
 
+        currentContextIsServer(false);
         removeSchedules();
         scheduleAt(process.getTime() + getLong("electionTimeout") + jitter);
+        currentContextIsServer(previousContextIsServer);
+    }
+
+    /**
+     * Clears any active server-side schedules while preserving the caller
+     * context.
+     */
+    private void clearServerSchedules() {
+        boolean previousContextIsServer = currentContextIsServer();
+
+        currentContextIsServer(true);
+        removeSchedules();
+        currentContextIsServer(previousContextIsServer);
     }
 
     /**

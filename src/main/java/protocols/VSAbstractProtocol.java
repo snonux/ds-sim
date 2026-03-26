@@ -247,6 +247,15 @@ abstract public class VSAbstractProtocol extends VSAbstractEvent {
     }
 
     /**
+     * Checks whether the protocol currently runs in server context.
+     *
+     * @return true if the current context is server, otherwise false
+     */
+    public final boolean currentContextIsServer() {
+        return currentContextIsServer;
+    }
+
+    /**
      * Checks how the protocol will start
      *
      * @return true, if this protocol uses onServerStart instead of
