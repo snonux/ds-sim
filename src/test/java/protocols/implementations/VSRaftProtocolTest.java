@@ -60,6 +60,7 @@ class VSRaftProtocolTest {
 
         when(mockProcess.getSimulatorCanvas()).thenReturn(mockCanvas);
         when(mockCanvas.getTaskManager()).thenReturn(mockTaskManager);
+        when(mockCanvas.getNumProcesses()).thenReturn(3);
         when(mockProcess.getPrefs()).thenReturn(mockPrefs);
         when(mockProcess.getVectorTime()).thenReturn(mockVectorTime);
         when(mockVectorTime.getCopy()).thenReturn(mockVectorTime);
@@ -263,11 +264,180 @@ class VSRaftProtocolTest {
                 .isServerSchedule());
     }
 
+    @Test
+    void testClientReceiveVoteRequestGrantsEligibleCandidate() throws Exception {
+        protocol.currentContextIsServer(false);
+        protocol.onClientInit();
+        clearInvocations(mockProcess, mockTaskManager);
+        when(mockProcess.getTime()).thenReturn(200L, 200L);
+
+        VSMessage voteRequest = new VSMessage();
+        voteRequest.setString("type", "voteRequest");
+        voteRequest.setInteger("term", 2);
+        voteRequest.setInteger("candidateId", 11);
+
+        ArgumentCaptor<VSMessage> messageCaptor =
+            ArgumentCaptor.forClass(VSMessage.class);
+        ArgumentCaptor<VSTask> taskCaptor = ArgumentCaptor.forClass(VSTask.class);
+
+        protocol.onClientRecv(voteRequest);
+
+        verify(mockProcess).sendMessage(messageCaptor.capture());
+        verify(mockTaskManager, times(2)).removeAllTasks(any());
+        verify(mockTaskManager).addTask(taskCaptor.capture());
+
+        VSMessage voteResponse = messageCaptor.getValue();
+        assertEquals("voteResponse", voteResponse.getString("type"));
+        assertEquals(2, voteResponse.getInteger("term"));
+        assertEquals(7, voteResponse.getInteger("pid"));
+        assertTrue(voteResponse.getBoolean("voteGranted"));
+        assertEquals(11, voteResponse.getInteger("targetPid"));
+        assertEquals(2, getIntField("currentTerm"));
+        assertEquals(11, getIntField("votedFor"));
+        assertFalse(getBooleanField("isCandidate"));
+        assertFalse(getBooleanField("isLeader"));
+        assertEquals(4700L, taskCaptor.getValue().getTaskTime());
+    }
+
+    @Test
+    void testClientReceiveVoteRequestDeniesWhenAlreadyVotedForOtherCandidate()
+    throws Exception {
+        setIntField("currentTerm", 3);
+        setIntField("votedFor", 9);
+        protocol.currentContextIsServer(false);
+
+        VSMessage voteRequest = new VSMessage();
+        voteRequest.setString("type", "voteRequest");
+        voteRequest.setInteger("term", 3);
+        voteRequest.setInteger("candidateId", 11);
+
+        ArgumentCaptor<VSMessage> messageCaptor =
+            ArgumentCaptor.forClass(VSMessage.class);
+
+        protocol.onClientRecv(voteRequest);
+
+        verify(mockProcess).sendMessage(messageCaptor.capture());
+        verify(mockTaskManager, never()).removeAllTasks(any());
+        verify(mockTaskManager, never()).addTask(any());
+
+        VSMessage voteResponse = messageCaptor.getValue();
+        assertEquals("voteResponse", voteResponse.getString("type"));
+        assertEquals(3, voteResponse.getInteger("term"));
+        assertFalse(voteResponse.getBoolean("voteGranted"));
+        assertEquals(9, getIntField("votedFor"));
+        assertEquals(3, getIntField("currentTerm"));
+    }
+
+    @Test
+    void testVoteResponseMajorityPromotesCandidateToLeader() throws Exception {
+        protocol.currentContextIsServer(false);
+        setIntField("currentTerm", 3);
+        setIntField("votesReceived", 1);
+        setBooleanField("isCandidate", true);
+        when(mockProcess.getTime()).thenReturn(300L, 300L, 300L);
+
+        VSMessage voteResponse = new VSMessage();
+        voteResponse.setString("type", "voteResponse");
+        voteResponse.setInteger("term", 3);
+        voteResponse.setInteger("pid", 2);
+        voteResponse.setBoolean("voteGranted", true);
+        voteResponse.setInteger("targetPid", 7);
+
+        ArgumentCaptor<VSMessage> messageCaptor =
+            ArgumentCaptor.forClass(VSMessage.class);
+        ArgumentCaptor<VSTask> taskCaptor = ArgumentCaptor.forClass(VSTask.class);
+
+        protocol.onServerRecv(voteResponse);
+
+        verify(mockProcess).sendMessage(messageCaptor.capture());
+        verify(mockTaskManager).removeAllTasks(any());
+        verify(mockTaskManager).addTask(taskCaptor.capture());
+
+        VSMessage heartbeat = messageCaptor.getValue();
+        assertEquals("heartbeat", heartbeat.getString("type"));
+        assertEquals(3, heartbeat.getInteger("term"));
+        assertEquals(7, heartbeat.getInteger("leaderId"));
+        assertTrue(getBooleanField("isLeader"));
+        assertFalse(getBooleanField("isCandidate"));
+        assertEquals(7, getIntField("leaderId"));
+        assertTrue(protocol.isServer());
+        assertEquals(1800L, taskCaptor.getValue().getTaskTime());
+    }
+
+    @Test
+    void testVoteResponseForDifferentTargetDoesNotCount() throws Exception {
+        protocol.currentContextIsServer(false);
+        setIntField("currentTerm", 3);
+        setIntField("votesReceived", 1);
+        setBooleanField("isCandidate", true);
+
+        VSMessage voteResponse = new VSMessage();
+        voteResponse.setString("type", "voteResponse");
+        voteResponse.setInteger("term", 3);
+        voteResponse.setInteger("pid", 2);
+        voteResponse.setBoolean("voteGranted", true);
+        voteResponse.setInteger("targetPid", 99);
+
+        protocol.onServerRecv(voteResponse);
+
+        verify(mockProcess, never()).sendMessage(any());
+        verify(mockTaskManager, never()).removeAllTasks(any());
+        verify(mockTaskManager, never()).addTask(any());
+        assertEquals(1, getIntField("votesReceived"));
+        assertTrue(getBooleanField("isCandidate"));
+        assertFalse(getBooleanField("isLeader"));
+    }
+
+    @Test
+    void testHigherTermVoteResponseDemotesCandidateToFollower() throws Exception {
+        protocol.currentContextIsServer(false);
+        protocol.onClientInit();
+        clearInvocations(mockProcess, mockTaskManager);
+        setIntField("currentTerm", 3);
+        setIntField("votesReceived", 2);
+        setBooleanField("isCandidate", true);
+        when(mockProcess.getTime()).thenReturn(500L, 500L);
+
+        VSMessage voteResponse = new VSMessage();
+        voteResponse.setString("type", "voteResponse");
+        voteResponse.setInteger("term", 4);
+        voteResponse.setInteger("pid", 2);
+        voteResponse.setBoolean("voteGranted", false);
+        voteResponse.setInteger("targetPid", 7);
+
+        ArgumentCaptor<VSTask> taskCaptor = ArgumentCaptor.forClass(VSTask.class);
+
+        protocol.onServerRecv(voteResponse);
+
+        verify(mockProcess, never()).sendMessage(any());
+        verify(mockTaskManager, times(2)).removeAllTasks(any());
+        verify(mockTaskManager).addTask(taskCaptor.capture());
+        assertEquals(4, getIntField("currentTerm"));
+        assertEquals(-1, getIntField("votedFor"));
+        assertEquals(0, getIntField("votesReceived"));
+        assertFalse(getBooleanField("isCandidate"));
+        assertFalse(getBooleanField("isLeader"));
+        assertEquals(5000L, taskCaptor.getValue().getTaskTime());
+    }
+
     private void invokeBecomeFollower(int term, int leaderId) throws Exception {
         Method method = VSRaftProtocol.class.getDeclaredMethod(
             "becomeFollower", int.class, int.class);
         method.setAccessible(true);
         method.invoke(protocol, term, leaderId);
+    }
+
+    private void setIntField(String fieldName, int value) throws Exception {
+        Field field = VSRaftProtocol.class.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        field.setInt(protocol, value);
+    }
+
+    private void setBooleanField(String fieldName, boolean value)
+    throws Exception {
+        Field field = VSRaftProtocol.class.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        field.setBoolean(protocol, value);
     }
 
     private int getIntField(String fieldName) throws Exception {
