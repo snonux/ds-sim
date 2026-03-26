@@ -40,6 +40,9 @@ public class VSRaftProtocol extends VSAbstractProtocol {
     /** PIDs which still have to acknowledge the current operation. */
     private ArrayList<Integer> ackPids;
 
+    /** Peer PIDs whose vote responses have been counted in this election. */
+    private ArrayList<Integer> voteResponsePids;
+
     /** The local log index. */
     private int logIndex;
 
@@ -152,6 +155,12 @@ public class VSRaftProtocol extends VSAbstractProtocol {
         } else {
             ackPids.clear();
         }
+
+        if (voteResponsePids == null) {
+            voteResponsePids = new ArrayList<Integer>();
+        } else {
+            voteResponsePids.clear();
+        }
     }
 
     /**
@@ -161,6 +170,7 @@ public class VSRaftProtocol extends VSAbstractProtocol {
         isLeader = true;
         isCandidate = false;
         votesReceived = 0;
+        voteResponsePids.clear();
         leaderId = process.getProcessID();
         lastHeartbeatTime = process.getTime();
         isServer(true);
@@ -193,6 +203,7 @@ public class VSRaftProtocol extends VSAbstractProtocol {
         leaderId = newLeaderId;
         votedFor = -1;
         votesReceived = 0;
+        voteResponsePids.clear();
         resetElectionTimeout();
     }
 
@@ -230,6 +241,7 @@ public class VSRaftProtocol extends VSAbstractProtocol {
         currentTerm++;
         votedFor = process.getProcessID();
         votesReceived = 1;
+        voteResponsePids.clear();
         isLeader = false;
         isCandidate = true;
         leaderId = -1;
@@ -284,9 +296,12 @@ public class VSRaftProtocol extends VSAbstractProtocol {
         int candidateId = recvMessage.getInteger("candidateId");
         boolean voteGranted = false;
 
-        if (messageTerm >= currentTerm &&
-                (votedFor == -1 || votedFor == candidateId)) {
+        if (messageTerm > currentTerm) {
             becomeFollower(messageTerm, -1);
+        }
+
+        if (messageTerm == currentTerm &&
+                (votedFor == -1 || votedFor == candidateId)) {
             votedFor = candidateId;
             voteGranted = true;
         }
@@ -307,6 +322,7 @@ public class VSRaftProtocol extends VSAbstractProtocol {
      */
     private void handleVoteResponse(VSMessage recvMessage) {
         int messageTerm = recvMessage.getInteger("term");
+        Integer responderPid = recvMessage.getIntegerObj("pid");
 
         if (messageTerm > currentTerm) {
             becomeFollower(messageTerm, -1);
@@ -315,10 +331,12 @@ public class VSRaftProtocol extends VSAbstractProtocol {
 
         if (!isCandidate || !isForMe(recvMessage) ||
                 !recvMessage.getBoolean("voteGranted") ||
-                messageTerm != currentTerm) {
+                messageTerm != currentTerm ||
+                voteResponsePids.contains(responderPid)) {
             return;
         }
 
+        voteResponsePids.add(responderPid);
         votesReceived++;
 
         if (votesReceived > getClusterSize() / 2) {
