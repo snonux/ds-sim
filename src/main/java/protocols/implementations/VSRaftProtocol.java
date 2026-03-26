@@ -33,6 +33,9 @@ public class VSRaftProtocol extends VSAbstractProtocol {
     /** The local time when the last heartbeat was observed. */
     private long lastHeartbeatTime;
 
+    /** The randomized local deadline for the next election timeout. */
+    private long electionDeadline;
+
     /** PIDs which still have to acknowledge the current operation. */
     private ArrayList<Integer> ackPids;
 
@@ -105,9 +108,9 @@ public class VSRaftProtocol extends VSAbstractProtocol {
      * @see protocols.VSAbstractProtocol#onClientSchedule()
      */
     public void onClientSchedule() {
-        long elapsedSinceHeartbeat = process.getTime() - lastHeartbeatTime;
+        long currentTime = process.getTime();
 
-        if (!isLeader && elapsedSinceHeartbeat >= getLong("electionTimeout")) {
+        if (!isLeader && currentTime >= electionDeadline) {
             startElection();
         }
     }
@@ -137,6 +140,7 @@ public class VSRaftProtocol extends VSAbstractProtocol {
         isLeader = false;
         isCandidate = false;
         lastHeartbeatTime = 0;
+        electionDeadline = 0;
         logIndex = 0;
         commitIndex = 0;
 
@@ -183,10 +187,11 @@ public class VSRaftProtocol extends VSAbstractProtocol {
         long jitterPercentage = Math.abs(process.getRandomPercentage());
         long jitter = (getLong("electionJitter") * jitterPercentage) / 100L;
         boolean previousContextIsServer = currentContextIsServer();
+        electionDeadline = process.getTime() + getLong("electionTimeout") + jitter;
 
         currentContextIsServer(false);
         removeSchedules();
-        scheduleAt(process.getTime() + getLong("electionTimeout") + jitter);
+        scheduleAt(electionDeadline);
         currentContextIsServer(previousContextIsServer);
     }
 

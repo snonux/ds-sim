@@ -120,7 +120,7 @@ class VSRaftProtocolTest {
     }
 
     @Test
-    void testOnClientInitSchedulesRandomizedElectionTimeout() {
+    void testOnClientInitSchedulesRandomizedElectionTimeout() throws Exception {
         protocol.currentContextIsServer(false);
 
         ArgumentCaptor<VSTask> taskCaptor = ArgumentCaptor.forClass(VSTask.class);
@@ -132,6 +132,7 @@ class VSRaftProtocolTest {
 
         VSTask task = taskCaptor.getValue();
         assertEquals(4600L, task.getTaskTime());
+        assertEquals(4600L, getLongField("electionDeadline"));
         assertFalse(((VSProtocolScheduleEvent) task.getEvent()).isServerSchedule());
     }
 
@@ -140,7 +141,7 @@ class VSRaftProtocolTest {
         protocol.currentContextIsServer(false);
         protocol.onClientInit();
         clearInvocations(mockProcess, mockTaskManager);
-        when(mockProcess.getTime()).thenReturn(4200L);
+        when(mockProcess.getTime()).thenReturn(4700L, 4700L, 4700L);
 
         ArgumentCaptor<VSMessage> messageCaptor =
             ArgumentCaptor.forClass(VSMessage.class);
@@ -160,7 +161,8 @@ class VSRaftProtocolTest {
         assertFalse(getBooleanField("isLeader"));
         assertEquals(1, getIntField("votesReceived"));
         assertEquals(7, getIntField("votedFor"));
-        assertEquals(8700L, taskCaptor.getValue().getTaskTime());
+        assertEquals(9200L, taskCaptor.getValue().getTaskTime());
+        assertEquals(9200L, getLongField("electionDeadline"));
         assertFalse(
             ((VSProtocolScheduleEvent) taskCaptor.getValue().getEvent())
                 .isServerSchedule());
@@ -186,14 +188,31 @@ class VSRaftProtocolTest {
     }
 
     @Test
+    void testOnClientScheduleDoesNotStartElectionInJitterWindow() throws Exception {
+        protocol.currentContextIsServer(false);
+        protocol.onClientInit();
+        clearInvocations(mockProcess, mockTaskManager);
+        when(mockProcess.getTime()).thenReturn(4500L);
+
+        protocol.onClientSchedule();
+
+        verify(mockProcess, never()).sendMessage(any());
+        verify(mockTaskManager, never()).removeAllTasks(any());
+        verify(mockTaskManager, never()).addTask(any());
+        assertFalse(getBooleanField("isCandidate"));
+        assertEquals(0, getIntField("currentTerm"));
+        assertEquals(4600L, getLongField("electionDeadline"));
+    }
+
+    @Test
     void testCandidateTimeoutStartsNewElectionAndReschedules() throws Exception {
         protocol.currentContextIsServer(false);
         protocol.onClientInit();
-        when(mockProcess.getTime()).thenReturn(4200L, 4200L, 4200L);
+        when(mockProcess.getTime()).thenReturn(4700L, 4700L, 4700L);
 
         protocol.onClientSchedule();
         clearInvocations(mockProcess, mockTaskManager);
-        when(mockProcess.getTime()).thenReturn(8401L, 8401L, 8401L);
+        when(mockProcess.getTime()).thenReturn(9401L, 9401L, 9401L);
 
         ArgumentCaptor<VSMessage> messageCaptor =
             ArgumentCaptor.forClass(VSMessage.class);
@@ -210,7 +229,8 @@ class VSRaftProtocolTest {
         assertEquals(2, voteRequest.getInteger("term"));
         assertEquals(2, getIntField("currentTerm"));
         assertEquals(1, getIntField("votesReceived"));
-        assertEquals(12901L, taskCaptor.getValue().getTaskTime());
+        assertEquals(13901L, taskCaptor.getValue().getTaskTime());
+        assertEquals(13901L, getLongField("electionDeadline"));
     }
 
     @Test
@@ -260,5 +280,11 @@ class VSRaftProtocolTest {
         Field field = VSRaftProtocol.class.getDeclaredField(fieldName);
         field.setAccessible(true);
         return field.getBoolean(protocol);
+    }
+
+    private long getLongField(String fieldName) throws Exception {
+        Field field = VSRaftProtocol.class.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return field.getLong(protocol);
     }
 }
