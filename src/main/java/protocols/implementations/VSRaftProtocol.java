@@ -76,6 +76,7 @@ public class VSRaftProtocol extends VSAbstractProtocol {
      * @see protocols.VSAbstractProtocol#onServerStart()
      */
     public void onServerStart() {
+        becomeLeader();
     }
 
     /* (non-Javadoc)
@@ -94,6 +95,9 @@ public class VSRaftProtocol extends VSAbstractProtocol {
      * @see protocols.VSAbstractProtocol#onServerSchedule()
      */
     public void onServerSchedule() {
+        if (isLeader) {
+            sendHeartbeat();
+        }
     }
 
     /* (non-Javadoc)
@@ -135,5 +139,30 @@ public class VSRaftProtocol extends VSAbstractProtocol {
         } else {
             ackPids.clear();
         }
+    }
+
+    /**
+     * Transitions this process into the leader role and starts heartbeats.
+     */
+    private void becomeLeader() {
+        isLeader = true;
+        isCandidate = false;
+        leaderId = process.getProcessID();
+        lastHeartbeatTime = process.getTime();
+        sendHeartbeat();
+    }
+
+    /**
+     * Sends a heartbeat and schedules the next leader heartbeat interval.
+     */
+    private void sendHeartbeat() {
+        VSMessage heartbeat = new VSMessage();
+        heartbeat.setString("type", "heartbeat");
+        heartbeat.setInteger("term", currentTerm);
+        heartbeat.setInteger("leaderId", leaderId);
+        sendMessage(heartbeat);
+
+        lastHeartbeatTime = process.getTime();
+        scheduleAt(process.getTime() + getLong("heartbeatInterval"));
     }
 }
