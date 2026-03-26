@@ -167,6 +167,25 @@ class VSRaftProtocolTest {
     }
 
     @Test
+    void testOnClientScheduleDoesNotStartElectionBeforeTimeout() throws Exception {
+        protocol.currentContextIsServer(false);
+        protocol.onClientInit();
+        clearInvocations(mockProcess, mockTaskManager);
+        when(mockProcess.getTime()).thenReturn(2000L);
+
+        protocol.onClientSchedule();
+
+        verify(mockProcess, never()).sendMessage(any());
+        verify(mockTaskManager, never()).removeAllTasks(any());
+        verify(mockTaskManager, never()).addTask(any());
+        assertFalse(getBooleanField("isCandidate"));
+        assertFalse(getBooleanField("isLeader"));
+        assertEquals(0, getIntField("currentTerm"));
+        assertEquals(0, getIntField("votesReceived"));
+        assertEquals(-1, getIntField("votedFor"));
+    }
+
+    @Test
     void testCandidateTimeoutStartsNewElectionAndReschedules() throws Exception {
         protocol.currentContextIsServer(false);
         protocol.onClientInit();
