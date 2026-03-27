@@ -1,6 +1,7 @@
 package core;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
@@ -21,6 +22,7 @@ import testing.HeadlessLoader;
 
 class VSTaskManagerCrashRecoveryIntegrationTest {
     private static final long ADVANCE_STEP_MS = 1L;
+    private static final String RAFT_REPLAY = "saved-simulations/raft.dat";
 
     private VSSimulator simulatorToStop;
     private VSSimulator loadedSimulatorToStop;
@@ -115,6 +117,34 @@ class VSTaskManagerCrashRecoveryIntegrationTest {
                     "process 0 should remain recovered after replay load");
         assertTrue(visualization.getProcess(1).isCrashed(),
                    "process 1 should crash immediately after its later replay point");
+    }
+
+    @Test
+    @DisplayName("Loaded raft replay keeps crash and recover events visible in Event view collections")
+    void loadedRaftReplayKeepsCrashAndRecoverEventsVisible() throws Exception {
+        HeadlessLoader.LoadedSimulation loaded =
+            HeadlessLoader.load(RAFT_REPLAY, prefs.VSDefaultPrefs.init());
+        loadedSimulatorToStop = loaded.getSimulator();
+
+        VSSimulatorVisualization visualization = loaded.getVisualization();
+        VSTaskManager taskManager = visualization.getTaskManager();
+        VSInternalProcess process0 = visualization.getProcess(0);
+        VSInternalProcess process2 = visualization.getProcess(2);
+
+        assertEquals(6, taskManager.getGlobalTasks().size(),
+                     "loaded raft replay should expose all saved global tasks");
+        assertEquals(3, taskManager.getProcessGlobalTasks(process0).size(),
+                     "process 0 should expose its activation, crash, and recover events");
+        assertEquals(2, taskManager.getProcessGlobalTasks(process2).size(),
+                     "process 2 should expose its activation and later crash event");
+
+        runUntil(visualization, 12001);
+        assertEquals(3, taskManager.getProcessGlobalTasks(process0).size(),
+                     "process 0 recover event should remain visible after it executes");
+
+        runUntil(visualization, 20001);
+        assertEquals(2, taskManager.getProcessGlobalTasks(process2).size(),
+                     "process 2 later crash event should remain visible after it executes");
     }
 
     @Test
