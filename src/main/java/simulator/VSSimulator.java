@@ -1553,5 +1553,15 @@ public class VSSimulator extends JPanel implements VSSerializable {
         updateTaskManagerTable();
         updateProcessesComboBox();
         processesComboBox.setSelectedIndex(processesComboBox.getItemCount()-1);
+
+        revalidate();
+        repaint();
+        simulatorVisualization.revalidate();
+        simulatorVisualization.repaint();
+
+        if (simulatorFrame != null) {
+            simulatorFrame.revalidate();
+            simulatorFrame.repaint();
+        }
     }
 }

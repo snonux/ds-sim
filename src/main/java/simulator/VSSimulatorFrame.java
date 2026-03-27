@@ -19,6 +19,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JTabbedPane;
 import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -601,10 +602,41 @@ public class VSSimulatorFrame extends VSFrame {
         VSSerialize serialize = new VSSerialize();
         VSSimulator simulator = serialize.openSimulator(filename, this);
 
-        if (simulator != null)
-            startCurrentSimulator();
+        if (simulator != null) {
+            refreshLoadedSimulator(simulator);
+
+            final VSSimulator loadedSimulator = simulator;
+            if (SwingUtilities.isEventDispatchThread()) {
+                startCurrentSimulator();
+            } else {
+                SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                        if (currentSimulator == loadedSimulator)
+                            startCurrentSimulator();
+                    }
+                });
+            }
+        }
 
         return simulator;
+    }
+
+    /**
+     * Refreshes the loaded simulator tab after deserialization.
+     *
+     * @param simulator the loaded simulator
+     */
+    private void refreshLoadedSimulator(VSSimulator simulator) {
+        simulator.revalidate();
+        simulator.repaint();
+
+        if (tabbedPane != null) {
+            tabbedPane.revalidate();
+            tabbedPane.repaint();
+        }
+
+        revalidate();
+        repaint();
     }
 
     /**
