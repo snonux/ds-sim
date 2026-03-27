@@ -86,7 +86,9 @@ public class HeadlessSimulationRunner {
             
             // Get the simulation's configured end time
             long untilTime = viz.getUntilTime();
-            long actualMaxTime = Math.min(maxTime, untilTime);
+            long prefsUntilTime = simulator.getPrefs().getInteger("sim.seconds") * 1000L;
+            long actualUntilTime = Math.max(untilTime, prefsUntilTime);
+            long actualMaxTime = Math.min(maxTime, actualUntilTime);
             
             System.out.println("Running simulation for up to " + actualMaxTime + "ms (until time: " + untilTime + "ms)...");
             

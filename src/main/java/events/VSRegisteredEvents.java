@@ -88,6 +88,8 @@ public final class VSRegisteredEvents {
         registerEvent("events.implementations.VSVectorTimestampEvent");
         registerEvent("events.implementations.VSTimestampMonitorEvent");
         registerEvent("events.implementations.VSTimestampTriggeredEvent");
+        registerEvent("events.internal.VSProtocolEvent");
+        registerEvent("events.internal.VSProtocolScheduleEvent");
         registerEvent("protocols.implementations.VSBasicMulticastProtocol");
         registerEvent("protocols.implementations.VSBerkelyTimeProtocol");
         registerEvent("protocols.implementations.VSBroadcastProtocol");

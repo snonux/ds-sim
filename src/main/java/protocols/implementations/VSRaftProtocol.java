@@ -177,6 +177,7 @@ public class VSRaftProtocol extends VSAbstractProtocol {
         leaderId = process.getProcessID();
         lastHeartbeatTime = process.getTime();
         isServer(true);
+        log("Leader elected: process " + leaderId + " (term " + currentTerm + ")");
 
         if (!getLongKeySet().contains("heartbeatInterval")) {
             onServerInit();

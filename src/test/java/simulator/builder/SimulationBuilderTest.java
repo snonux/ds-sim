@@ -4,6 +4,7 @@ import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 import java.io.File;
 import java.nio.file.*;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Tests for the SimulationBuilder framework
@@ -40,7 +41,8 @@ class SimulationBuilderTest {
         File file = new File(filename);
         assertTrue(file.exists(), "Simulation file should be created");
         
-        String content = Files.readString(file.toPath());
+        String content = new String(Files.readAllBytes(file.toPath()),
+                                    StandardCharsets.ISO_8859_1);
         assertTrue(content.contains("VSPingPongProtocol"), "Should contain PingPong protocol");
     }
     
@@ -54,7 +56,7 @@ class SimulationBuilderTest {
             .withProtocol(SimulationBuilder.Protocols.TWO_PHASE_COMMIT)
             .withDuration(30000)
             .activateServers(0, 1, 2)
-            .activateClients(1000, 3, 4)
+            .activateClientsAt(1000, 3, 4)
             .addCrashEvent(0, 5000)
             .addRecoveryEvent(0, 10000)
             .save(filename);
@@ -63,11 +65,29 @@ class SimulationBuilderTest {
         assertTrue(file.exists(), "Simulation file should be created");
         assertTrue(file.length() > 5000, "Complex simulation should be larger");
         
-        String content = Files.readString(file.toPath());
+        String content = new String(Files.readAllBytes(file.toPath()),
+                                    StandardCharsets.ISO_8859_1);
         assertTrue(content.contains("VSProcessCrashEvent"), "Should contain crash event");
         assertTrue(content.contains("VSProcessRecoverEvent"), "Should contain recovery event");
     }
-    
+
+    @Test
+    void testCreateRaftSimulation() throws Exception {
+        String filename = TEST_DIR + "test-raft.dat";
+
+        SimulationFactory.createRaftSimulation()
+            .save(filename);
+
+        File file = new File(filename);
+        assertTrue(file.exists(), "Simulation file should be created");
+        assertTrue(file.length() > 10000, "Raft simulation should be larger");
+
+        String content = new String(Files.readAllBytes(file.toPath()),
+                                    StandardCharsets.ISO_8859_1);
+        assertTrue(content.contains("VSRaftProtocol"), "Should contain Raft protocol");
+        assertTrue(content.contains("VSProcessCrashEvent"), "Should contain crash event");
+    }
+
     @Test
     void testAllProtocolTypes() throws Exception {
         // Test that all protocol constants work

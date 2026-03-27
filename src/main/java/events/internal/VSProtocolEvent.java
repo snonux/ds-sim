@@ -3,6 +3,8 @@ package events.internal;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import core.VSInternalProcess;
 import core.VSTask;
@@ -43,6 +45,9 @@ public class VSProtocolEvent extends VSAbstractInternalEvent
     /** The event is a protocol activation if true. Else it is a deactivation */
     private boolean isProtocolActivation;
 
+    /** Optional long preference overrides applied when the protocol starts. */
+    private HashMap<String, Long> longOverrides;
+
     /* (non-Javadoc)
      * @see events.VSCopyableEvent#initCopy(events.VSAbstractEvent)
      */
@@ -51,6 +56,10 @@ public class VSProtocolEvent extends VSAbstractInternalEvent
         protocolEventCopy.isClientProtocol(isClientProtocol);
         protocolEventCopy.isProtocolActivation(isProtocolActivation);
         protocolEventCopy.setProtocolClassname(protocolClassname);
+        if (longOverrides != null) {
+            protocolEventCopy.longOverrides =
+                new HashMap<String, Long>(longOverrides);
+        }
     }
 
     /* (non-Javadoc)
@@ -108,6 +117,20 @@ public class VSProtocolEvent extends VSAbstractInternalEvent
     public void setProtocolClassname(String protocolClassname) {
         this.protocolClassname = protocolClassname;
     }
+
+    /**
+     * Overrides a long preference before the protocol starts.
+     *
+     * @param key the preference key
+     * @param value the value to apply
+     */
+    public void setLongOverride(String key, long value) {
+        if (longOverrides == null) {
+            longOverrides = new HashMap<String, Long>();
+        }
+
+        longOverrides.put(key, Long.valueOf(value));
+    }
     
     /**
      * Checks if we should schedule a protocol start task.
@@ -157,6 +180,8 @@ public class VSProtocolEvent extends VSAbstractInternalEvent
         VSInternalProcess internalProcess = (VSInternalProcess) process;
         VSAbstractProtocol protocol =
             internalProcess.getProtocolObject(protocolClassname);
+
+        applyLongOverrides(protocol);
 
         if (isClientProtocol)
             protocol.isClient(isProtocolActivation);
@@ -215,7 +240,9 @@ public class VSProtocolEvent extends VSAbstractInternalEvent
         objectOutputStream.writeObject(Boolean.valueOf(isProtocolActivation));
 
         /** For later backwards compatibility, to add more stuff */
-        objectOutputStream.writeObject(Boolean.valueOf(false));
+        objectOutputStream.writeObject(longOverrides == null
+                                      ? Boolean.valueOf(false)
+                                      : new HashMap<String, Long>(longOverrides));
     }
 
     /* (non-Javadoc)
@@ -242,7 +269,17 @@ public class VSProtocolEvent extends VSAbstractInternalEvent
         this.setShortname(createShortname(null));
 
         /** For later backwards compatibility, to add more stuff */
-        objectInputStream.readObject();
+        Object overrides = objectInputStream.readObject();
+        if (overrides instanceof Map<?, ?> map) {
+            longOverrides = new HashMap<String, Long>();
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                if (entry.getKey() instanceof String
+                        && entry.getValue() instanceof Long) {
+                    longOverrides.put((String) entry.getKey(),
+                                      (Long) entry.getValue());
+                }
+            }
+        }
     }
 
     protected String createShortname(String savedShortname) {
@@ -265,5 +302,15 @@ public class VSProtocolEvent extends VSAbstractInternalEvent
             prefs.getString("lang.activated") :
             prefs.getString("lang.deactivated");
         return protocolShortname + " " + clientServer + " " + activateDeactivate;
+    }
+
+    private void applyLongOverrides(VSAbstractProtocol protocol) {
+        if (longOverrides == null || longOverrides.isEmpty()) {
+            return;
+        }
+
+        for (Map.Entry<String, Long> entry : longOverrides.entrySet()) {
+            protocol.setLong(entry.getKey(), entry.getValue().longValue());
+        }
     }
 }

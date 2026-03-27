@@ -267,6 +267,11 @@ class VSAbstractProtocolTest {
     void testScheduleAt() {
         testProtocol.process = mockProcess;
         testProtocol.currentContextIsServer(true);
+        when(mockProcess.getPrefs()).thenReturn(mockPrefs);
+        when(mockPrefs.getString("lang.server")).thenReturn("Server");
+        when(mockPrefs.getString("lang.client")).thenReturn("Client");
+        when(mockPrefs.getString("lang.events.internal.VSProtocolScheduleEvent.short"))
+            .thenReturn("Protocol Schedule");
         
         long scheduleTime = 100L;
         testProtocol.scheduleAt(scheduleTime);
@@ -277,6 +282,12 @@ class VSAbstractProtocolTest {
         VSTask capturedTask = taskCaptor.getValue();
         assertNotNull(capturedTask);
         assertEquals(mockProcess, capturedTask.getProcess());
+        assertInstanceOf(VSProtocolScheduleEvent.class, capturedTask.getEvent());
+        assertEquals("events.internal.VSProtocolScheduleEvent",
+                     capturedTask.getEvent().getClassname());
+        assertEquals("protocols.VSAbstractProtocolTest$TestProtocol "
+                     + "Server Protocol Schedule",
+                     capturedTask.getEvent().getShortname());
     }
     
     @Test

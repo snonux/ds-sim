@@ -47,32 +47,32 @@ public class HeadlessLoader {
         // Copy non-string values from serialized prefs
         for (String key : serializedPrefs.getIntegerKeySet()) {
             if (!key.startsWith("lang.")) {
-                newPrefs.initInteger(key, serializedPrefs.getInteger(key));
+                newPrefs.setInteger(key, serializedPrefs.getInteger(key));
             }
         }
         for (String key : serializedPrefs.getBooleanKeySet()) {
             if (!key.startsWith("lang.")) {
-                newPrefs.initBoolean(key, serializedPrefs.getBoolean(key));
+                newPrefs.setBoolean(key, serializedPrefs.getBoolean(key));
             }
         }
         for (String key : serializedPrefs.getFloatKeySet()) {
             if (!key.startsWith("lang.")) {
-                newPrefs.initFloat(key, serializedPrefs.getFloat(key));
+                newPrefs.setFloat(key, serializedPrefs.getFloat(key));
             }
         }
         for (String key : serializedPrefs.getColorKeySet()) {
             if (!key.startsWith("lang.")) {
-                newPrefs.initColor(key, serializedPrefs.getColor(key));
+                newPrefs.setColor(key, serializedPrefs.getColor(key));
             }
         }
         for (String key : serializedPrefs.getVectorKeySet()) {
             if (!key.startsWith("lang.")) {
-                newPrefs.initVector(key, serializedPrefs.getVector(key));
+                newPrefs.setVector(key, serializedPrefs.getVector(key));
             }
         }
         for (String key : serializedPrefs.getLongKeySet()) {
             if (!key.startsWith("lang.")) {
-                newPrefs.initLong(key, serializedPrefs.getLong(key));
+                newPrefs.setLong(key, serializedPrefs.getLong(key));
             }
         }
         
@@ -86,6 +86,41 @@ public class HeadlessLoader {
         // Deserialize simulator
         simulator.deserialize(serializer, objectInputStream);
         objectInputStream.close();
+
+        // Reapply non-localized prefs after deserialization in case the
+        // simulator reset any persisted numeric values while restoring state.
+        VSPrefs simulatorPrefs = simulator.getPrefs();
+        for (String key : serializedPrefs.getIntegerKeySet()) {
+            if (!key.startsWith("lang.")) {
+                simulatorPrefs.setInteger(key, serializedPrefs.getInteger(key));
+            }
+        }
+        for (String key : serializedPrefs.getBooleanKeySet()) {
+            if (!key.startsWith("lang.")) {
+                simulatorPrefs.setBoolean(key, serializedPrefs.getBoolean(key));
+            }
+        }
+        for (String key : serializedPrefs.getFloatKeySet()) {
+            if (!key.startsWith("lang.")) {
+                simulatorPrefs.setFloat(key, serializedPrefs.getFloat(key));
+            }
+        }
+        for (String key : serializedPrefs.getColorKeySet()) {
+            if (!key.startsWith("lang.")) {
+                simulatorPrefs.setColor(key, serializedPrefs.getColor(key));
+            }
+        }
+        for (String key : serializedPrefs.getVectorKeySet()) {
+            if (!key.startsWith("lang.")) {
+                simulatorPrefs.setVector(key, serializedPrefs.getVector(key));
+            }
+        }
+        for (String key : serializedPrefs.getLongKeySet()) {
+            if (!key.startsWith("lang.")) {
+                simulatorPrefs.setLong(key, serializedPrefs.getLong(key));
+            }
+        }
+        simulator.updateFromPrefs();
         
         // Get the visualization using reflection
         Field vizField = VSSimulator.class.getDeclaredField("simulatorVisualization");

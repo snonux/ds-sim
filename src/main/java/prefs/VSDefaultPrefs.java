@@ -160,6 +160,10 @@ public class VSDefaultPrefs extends VSSerializablePrefs {
         initString("lang.events.implementations.VSProcessCrashEvent.short", "Process Crash");
         initString("lang.events.implementations.VSProcessRecoverEvent", "Process Recover Event");
         initString("lang.events.implementations.VSProcessRecoverEvent.short", "Process Recover");
+        initString("lang.events.internal.VSProtocolEvent", "Protocol Event");
+        initString("lang.events.internal.VSProtocolEvent.short", "Protocol Event");
+        initString("lang.events.internal.VSProtocolScheduleEvent", "Protocol Schedule Event");
+        initString("lang.events.internal.VSProtocolScheduleEvent.short", "Protocol Schedule");
         initString("lang.protocols.implementations.VSBasicMulticastProtocol", "Basic Multicast Protocol");
         initString("lang.protocols.implementations.VSBasicMulticastProtocol.short", "Basic Multicast");
         initString("lang.protocols.implementations.VSBerkelyTimeProtocol", "Berkley algorithm for internal sync.");

@@ -20,7 +20,7 @@ import java.util.ArrayList;
  *     .withProcesses(5)
  *     .withProtocol("protocols.implementations.VSRaftProtocol")
  *     .activateServers(0, 1, 2)
- *     .activateClients(3, 4)
+ *     .activateClientsAt(1000, 3, 4)
  *     .addCrashEvent(0, 2000)
  *     .addRecoveryEvent(0, 3000)
  *     .save("saved-simulations/my-raft.dat");
@@ -35,6 +35,7 @@ public class SimulationBuilder {
     private String protocolClass;
     private int numProcesses = 3; // default
     private List<ScheduledTask> scheduledTasks = new ArrayList<>();
+    private Map<Integer, Map<String, Long>> protocolLongOverrides = new HashMap<>();
     private int simulationDuration = 10000; // default 10 seconds
     
     /**
@@ -99,6 +100,7 @@ public class SimulationBuilder {
             event.onInit(); // Initialize the event first
             setProtocolClassname(event, protocolClass);
             setIsServer(event, true);
+            attachProtocolOverrides(event, pid);
             
             scheduledTasks.add(new ScheduledTask(0, pid, event, true));
         }
@@ -109,23 +111,47 @@ public class SimulationBuilder {
      * Activate protocol as client on specified processes
      */
     public SimulationBuilder activateClients(int... processIds) {
-        return activateClients(500, processIds); // default delay
+        return activateClientsAt(500L, processIds); // default delay
     }
     
     /**
      * Activate protocol as client on specified processes with custom start time
      */
-    public SimulationBuilder activateClients(long startTime, int... processIds) {
+    public SimulationBuilder activateClientsAt(long startTime, int... processIds) {
         for (int i = 0; i < processIds.length; i++) {
             VSProtocolEvent event = new VSProtocolEvent();
             event.onInit(); // Initialize the event first
             setProtocolClassname(event, protocolClass);
             setIsServer(event, false);
+            attachProtocolOverrides(event, processIds[i]);
             
             // Stagger client starts
             long time = startTime + (i * 200);
             scheduledTasks.add(new ScheduledTask(time, processIds[i], event, true));
         }
+        return this;
+    }
+
+    /**
+     * Override a long preference on the protocol instance for a given process.
+     *
+     * @param processId the process index in the simulation
+     * @param key the protocol preference key
+     * @param value the value to apply
+     * @return this builder
+     */
+    public SimulationBuilder setProtocolLong(int processId, String key, long value) {
+        protocolLongOverrides
+            .computeIfAbsent(Integer.valueOf(processId), pid -> new HashMap<>())
+            .put(key, Long.valueOf(value));
+
+        for (ScheduledTask scheduledTask : scheduledTasks) {
+            if (scheduledTask.processId == processId &&
+                    scheduledTask.event instanceof VSProtocolEvent protocolEvent) {
+                protocolEvent.setLongOverride(key, value);
+            }
+        }
+
         return this;
     }
     
@@ -257,6 +283,12 @@ public class SimulationBuilder {
         // Initialize all events with their processes
         for (ScheduledTask st : scheduledTasks) {
             VSInternalProcess process = visualization.getProcess(st.processId);
+            if (process == null) {
+                throw new IllegalStateException(
+                    "No process " + st.processId + " exists for "
+                    + st.event.getClass().getSimpleName() + " at time "
+                    + st.time);
+            }
             st.event.init(process);
             
             // For protocol events, update the shortname after init
@@ -277,6 +309,20 @@ public class SimulationBuilder {
             VSTask task = new VSTask(st.time, process, st.event, 
                 st.isGlobalTimed ? VSTask.GLOBAL : VSTask.LOCAL);
             taskManager.addTask(task);
+        }
+    }
+
+    /**
+     * Apply any stored protocol overrides to a protocol activation event.
+     */
+    private void attachProtocolOverrides(VSProtocolEvent event, int processId) {
+        Map<String, Long> longOverrides = protocolLongOverrides.get(Integer.valueOf(processId));
+        if (longOverrides == null || longOverrides.isEmpty()) {
+            return;
+        }
+
+        for (Map.Entry<String, Long> entry : longOverrides.entrySet()) {
+            event.setLongOverride(entry.getKey(), entry.getValue().longValue());
         }
     }
     
@@ -357,5 +403,6 @@ public class SimulationBuilder {
         public static final String ONE_PHASE_COMMIT = "protocols.implementations.VSOnePhaseCommitProtocol";
         public static final String TWO_PHASE_COMMIT = "protocols.implementations.VSTwoPhaseCommitProtocol";
         public static final String RELIABLE_MULTICAST = "protocols.implementations.VSReliableMulticastProtocol";
+        public static final String RAFT = "protocols.implementations.VSRaftProtocol";
     }
 }

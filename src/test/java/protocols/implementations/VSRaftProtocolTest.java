@@ -96,6 +96,7 @@ class VSRaftProtocolTest {
         assertEquals(2, getAckPids().size());
         assertTrue(getAckPids().contains(2));
         assertTrue(getAckPids().contains(3));
+        verify(mockProcess).log("Leader elected: process 7 (term 0)");
         assertEquals(1600L, taskCaptor.getValue().getTaskTime());
     }
 
@@ -465,6 +466,7 @@ class VSRaftProtocolTest {
         assertFalse(getBooleanField("isCandidate"));
         assertEquals(7, getIntField("leaderId"));
         assertTrue(protocol.isServer());
+        verify(mockProcess).log("Leader elected: process 7 (term 3)");
         assertEquals(1800L, taskCaptor.getValue().getTaskTime());
     }
 
@@ -662,6 +664,8 @@ class VSRaftProtocolTest {
     throws Exception {
         LeaderHarness leaderHarness = createLeaderHarness(11, 300L);
         leaderHarness.protocol.onStart();
+        verify(leaderHarness.process).log("Leader elected: process 11 (term 0)");
+        clearInvocations(leaderHarness.process);
 
         ArrayList<VSMessage> sentMessages = leaderHarness.protocol.getSentMessages();
         assertEquals(2, sentMessages.size());

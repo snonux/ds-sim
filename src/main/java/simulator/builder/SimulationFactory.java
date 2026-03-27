@@ -51,7 +51,7 @@ public class SimulationFactory {
             .withProtocol(SimulationBuilder.Protocols.TWO_PHASE_COMMIT)
             .withDuration(10000)
             .activateServers(0) // Process 0 is coordinator
-            .activateClients(300, IntStream.range(1, numParticipants + 1).toArray());
+            .activateClientsAt(300, IntStream.range(1, numParticipants + 1).toArray());
     }
     
     /**
@@ -79,5 +79,28 @@ public class SimulationFactory {
             .withDuration(8000)
             .activateServers(0) // First process broadcasts
             .activateClients(IntStream.range(1, numProcesses).toArray());
+    }
+
+    /**
+     * Create a Raft simulation with a leader crash and staggered follower
+     * activation so the election deadlines do not stay perfectly aligned.
+     *
+     * @return configured Raft simulation builder
+     */
+    public static SimulationBuilder createRaftSimulation() throws Exception {
+        return new SimulationBuilder()
+            .withProcesses(3)
+            .withProtocol(SimulationBuilder.Protocols.RAFT)
+            .withDuration(30000)
+            .activateServers(0)
+            .activateClientsAt(100, 1)
+            .activateClientsAt(1700, 2)
+            // Bias process 1 toward a fast, clean post-crash election while
+            // keeping process 2's timeout comfortably behind it.
+            .setProtocolLong(1, "electionTimeout", 4000)
+            .setProtocolLong(1, "electionJitter", 0)
+            .setProtocolLong(2, "electionTimeout", 9000)
+            .setProtocolLong(2, "electionJitter", 0)
+            .addCrashEvent(0, 3500);
     }
 }

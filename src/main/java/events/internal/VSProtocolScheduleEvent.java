@@ -3,7 +3,12 @@ package events.internal;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
 
+import core.VSAbstractProcess;
+import core.VSInternalProcess;
+import events.VSRegisteredEvents;
 import protocols.VSAbstractProtocol;
 import serialize.VSNotSerializable;
 import serialize.VSSerialize;
@@ -24,6 +29,12 @@ public class VSProtocolScheduleEvent extends VSAbstractInternalEvent
     private VSAbstractProtocol protocol;
 
     /**
+     * Create a VSProtocolScheduleEvent object for deserialization.
+     */
+    public VSProtocolScheduleEvent() {
+    }
+
+    /**
      * Create a VSProtocolScheduleEvent object
      *
      * @param protocol the protocol
@@ -41,6 +52,7 @@ public class VSProtocolScheduleEvent extends VSAbstractInternalEvent
      */
     public void onInit() {
         setClassname(getClass().toString());
+        setShortname(createShortname(null));
     }
 
     /**
@@ -85,6 +97,14 @@ public class VSProtocolScheduleEvent extends VSAbstractInternalEvent
      * @see events.VSAbstractEvent#onStart()
      */
     public void onStart() {
+        if (protocol == null) {
+            protocol = resolveProtocolFromProcess();
+        }
+
+        if (protocol == null) {
+            return;
+        }
+
         if (isServerSchedule)
             protocol.onServerScheduleStart();
         else
@@ -122,5 +142,82 @@ public class VSProtocolScheduleEvent extends VSAbstractInternalEvent
         /** For later backwards compatibility, to add more stuff */
         objectInputStream.readObject();
 
+        /** For later backwards compatibility, to add more stuff */
+        objectInputStream.readObject();
+
+    }
+
+    protected String createShortname(String savedShortname) {
+        if (prefs == null) {
+            return savedShortname != null
+                ? savedShortname
+                : "Protocol Schedule";
+        }
+
+        if (protocol == null || protocol.getClassname() == null) {
+            return prefs.getString("lang.events.internal.VSProtocolScheduleEvent.short");
+        }
+
+        String protocolShortname =
+            VSRegisteredEvents.getShortnameByClassname(protocol.getClassname());
+        if (protocolShortname == null)
+            protocolShortname = protocol.getClassname();
+
+        return protocolShortname + " "
+            + (isServerSchedule
+               ? prefs.getString("lang.server")
+               : prefs.getString("lang.client"))
+            + " "
+            + prefs.getString("lang.events.internal.VSProtocolScheduleEvent.short");
+    }
+
+    @SuppressWarnings("unchecked")
+    private VSAbstractProtocol resolveProtocolFromProcess() {
+        if (!(process instanceof VSInternalProcess internalProcess)) {
+            return null;
+        }
+
+        try {
+            VSAbstractProtocol raftProtocol =
+                internalProcess.getProtocolObject(
+                    "protocols.implementations.VSRaftProtocol");
+            if (raftProtocol != null) {
+                return raftProtocol;
+            }
+
+            Field field = VSAbstractProcess.class.getDeclaredField("protocolsToReset");
+            field.setAccessible(true);
+
+            ArrayList<VSAbstractProtocol> protocols =
+                (ArrayList<VSAbstractProtocol>) field.get(internalProcess);
+            if (protocols == null || protocols.isEmpty()) {
+                return null;
+            }
+
+            VSAbstractProtocol activeProtocol = null;
+            for (VSAbstractProtocol candidate : protocols) {
+                if (candidate == null) {
+                    continue;
+                }
+
+                if ("protocols.implementations.VSRaftProtocol".equals(
+                        candidate.getClassname())) {
+                    return candidate;
+                }
+
+                if (activeProtocol == null &&
+                        (candidate.isServer() || candidate.isClient())) {
+                    activeProtocol = candidate;
+                }
+            }
+
+            if (activeProtocol != null) {
+                return activeProtocol;
+            }
+
+            return protocols.get(0);
+        } catch (ReflectiveOperationException e) {
+            return null;
+        }
     }
 }

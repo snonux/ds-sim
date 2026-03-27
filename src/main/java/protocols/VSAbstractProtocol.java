@@ -333,6 +333,7 @@ abstract public class VSAbstractProtocol extends VSAbstractEvent {
         VSInternalProcess internalProcess = (VSInternalProcess) process;
         VSAbstractEvent scheduleEvent =
             new VSProtocolScheduleEvent(this, currentContextIsServer);
+        scheduleEvent.init(internalProcess);
         VSTask scheduleTask =
             new VSTask(time, internalProcess, scheduleEvent, VSTask.LOCAL);
 
