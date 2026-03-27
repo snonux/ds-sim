@@ -18,10 +18,10 @@ export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
 mvn clean package
 
 # Run the application
-java -jar target/ds-sim-1.0.1.jar
+java -jar target/ds-sim-1.1.0.jar
 
 # Quick build and run
-mvn clean package && java -jar target/ds-sim-1.0.1.jar
+mvn clean package && java -jar target/ds-sim-1.1.0.jar
 
 # Clean build artifacts
 mvn clean

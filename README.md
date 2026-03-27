@@ -100,9 +100,9 @@ cat target/surefire-reports/*.txt
 
 After building, you'll find:
 
-- `target/ds-sim-1.0.1.jar` - Executable JAR with all dependencies
+- `target/ds-sim-1.1.0.jar` - Executable JAR with all dependencies
 - `target/classes/` - Compiled class files
-- `target/original-ds-sim-1.0.1.jar` - JAR without dependencies
+- `target/original-ds-sim-1.1.0.jar` - JAR without dependencies
 
 ## Running the Application
 
@@ -139,7 +139,7 @@ mvn compile
 mvn test
 
 # 4. Build and test the application
-mvn package && java -jar target/ds-sim-1.0.1.jar
+mvn package && java -jar target/ds-sim-1.1.0.jar
 
 # 5. Clean up when done
 mvn clean
