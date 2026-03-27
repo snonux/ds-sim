@@ -20,9 +20,46 @@ import prefs.VSPrefs;
  * @author Paul C. Buetow
  */
 public class VSMain {
+    interface SplashScreenLauncher {
+        void show();
+    }
+
+    interface StartupDelay {
+        void pause() throws InterruptedException;
+    }
+
     interface SimulatorFrameFactory {
         VSSimulatorFrame create(VSPrefs prefs, Component relativeTo);
     }
+
+    private static final SplashScreenLauncher DEFAULT_SPLASH_LAUNCHER =
+        new SplashScreenLauncher() {
+            public void show() {
+                VSSplashScreen splash = new VSSplashScreen();
+                splash.showSplash();
+            }
+        };
+
+    private static final StartupDelay DEFAULT_STARTUP_DELAY =
+        new StartupDelay() {
+            public void pause() throws InterruptedException {
+                Thread.sleep(3000);
+            }
+        };
+
+    private static final SimulatorFrameFactory DEFAULT_FRAME_FACTORY =
+        new SimulatorFrameFactory() {
+            public VSSimulatorFrame create(VSPrefs prefs,
+                                           Component relativeTo) {
+                return new VSSimulatorFrame(prefs, relativeTo);
+            }
+        };
+
+    static volatile SplashScreenLauncher splashScreenLauncher =
+        DEFAULT_SPLASH_LAUNCHER;
+    static volatile StartupDelay startupDelay = DEFAULT_STARTUP_DELAY;
+    static volatile SimulatorFrameFactory simulatorFrameFactory =
+        DEFAULT_FRAME_FACTORY;
 
     /** The global preferences */
     public static VSPrefs prefs;
@@ -77,12 +114,7 @@ public class VSMain {
                                                  Component relativeTo,
                                                  String startupSimulationFile) {
         return launchSimulatorFrame(prefs, relativeTo, startupSimulationFile,
-                                    new SimulatorFrameFactory() {
-            public VSSimulatorFrame create(VSPrefs framePrefs,
-                                           Component frameRelativeTo) {
-                return new VSSimulatorFrame(framePrefs, frameRelativeTo);
-            }
-        });
+                                    simulatorFrameFactory);
     }
 
     static VSSimulatorFrame launchSimulatorFrame(VSPrefs prefs,
@@ -128,15 +160,19 @@ public class VSMain {
         }
     }
 
+    static void resetTestHooks() {
+        splashScreenLauncher = DEFAULT_SPLASH_LAUNCHER;
+        startupDelay = DEFAULT_STARTUP_DELAY;
+        simulatorFrameFactory = DEFAULT_FRAME_FACTORY;
+    }
+
     /**
      * The main method.
      *
      * @param args the arguments
      */
     public static void main(String[] args) {
-        // Show splash screen
-        VSSplashScreen splash = new VSSplashScreen();
-        splash.showSplash();
+        splashScreenLauncher.show();
         
         try {
             UIManager.setLookAndFeel(
@@ -151,7 +187,7 @@ public class VSMain {
 
         // Wait for splash screen to finish before showing main window
         try {
-            Thread.sleep(3000);
+            startupDelay.pause();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }

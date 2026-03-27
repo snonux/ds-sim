@@ -10,14 +10,21 @@ import static org.mockito.Mockito.mock;
 
 import java.awt.Component;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import prefs.VSDefaultPrefs;
 import prefs.VSPrefs;
 
 public class VSMainTest {
+    @AfterEach
+    void resetHooks() {
+        VSMain.resetTestHooks();
+    }
+
     @Test
     void resolveStartupSimulationFileReturnsNullForMissingArgs() {
         assertNull(VSMain.resolveStartupSimulationFile(null));
@@ -80,6 +87,50 @@ public class VSMainTest {
         assertTrue(openedOnEdt.get());
         assertNotNull(launchedFrame);
         assertSame(frame, launchedFrame);
+        assertEquals("saved-simulations/raft.dat", openedFilename.get());
+    }
+
+    @Test
+    void mainRoutesStartupReplayThroughEdt() {
+        AtomicInteger splashCalls = new AtomicInteger(0);
+        AtomicInteger delayCalls = new AtomicInteger(0);
+        AtomicBoolean createdOnEdt = new AtomicBoolean(false);
+        AtomicBoolean openedOnEdt = new AtomicBoolean(false);
+        AtomicReference<String> openedFilename = new AtomicReference<String>();
+        VSSimulatorFrame frame = mock(VSSimulatorFrame.class);
+
+        VSMain.splashScreenLauncher = new VSMain.SplashScreenLauncher() {
+            public void show() {
+                splashCalls.incrementAndGet();
+            }
+        };
+        VSMain.startupDelay = new VSMain.StartupDelay() {
+            public void pause() {
+                delayCalls.incrementAndGet();
+            }
+        };
+        VSMain.simulatorFrameFactory = new VSMain.SimulatorFrameFactory() {
+            public VSSimulatorFrame create(VSPrefs framePrefs,
+                                           Component relativeTo) {
+                createdOnEdt.set(javax.swing.SwingUtilities
+                                 .isEventDispatchThread());
+                return frame;
+            }
+        };
+
+        doAnswer(invocation -> {
+            openedOnEdt.set(javax.swing.SwingUtilities
+                            .isEventDispatchThread());
+            openedFilename.set(invocation.getArgument(0, String.class));
+            return null;
+        }).when(frame).openAndStartSimulator("saved-simulations/raft.dat");
+
+        VSMain.main(new String[] {"saved-simulations/raft.dat"});
+
+        assertEquals(1, splashCalls.get());
+        assertEquals(1, delayCalls.get());
+        assertTrue(createdOnEdt.get());
+        assertTrue(openedOnEdt.get());
         assertEquals("saved-simulations/raft.dat", openedFilename.get());
     }
 }
