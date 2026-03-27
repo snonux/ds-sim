@@ -387,17 +387,19 @@ public class VSRaftProtocol extends VSAbstractProtocol {
 
         if (messageTerm > currentTerm) {
             becomeFollower(messageTerm, messageLeaderId);
-        } else if (messageTerm == currentTerm) {
-            leaderId = messageLeaderId;
-            isLeader = false;
-            isCandidate = false;
-            resetElectionTimeout();
         } else {
             return;
         }
 
         if (messageLogIndex != logIndex + 1) {
             return;
+        }
+
+        if (messageTerm == currentTerm) {
+            leaderId = messageLeaderId;
+            isLeader = false;
+            isCandidate = false;
+            resetElectionTimeout();
         }
 
         logIndex = messageLogIndex;
