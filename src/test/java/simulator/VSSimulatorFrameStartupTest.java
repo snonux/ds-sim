@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 import prefs.VSDefaultPrefs;
+import serialize.VSSerialize;
 
 public class VSSimulatorFrameStartupTest {
     private static final String RAFT_FILE = "saved-simulations/raft.dat";
@@ -74,6 +75,29 @@ public class VSSimulatorFrameStartupTest {
             assertEquals(1, frame.startCalls);
             assertFalse(simulator.getSimulatorCanvas().isPaused());
             assertTrue(simulator.getSimulatorCanvas().getNumProcesses() > 0);
+        } finally {
+            SwingUtilities.invokeAndWait(frame::dispose);
+        }
+    }
+
+    @Test
+    void openSimulatorPreservesSavedReplayDuration() throws Exception {
+        Assumptions.assumeFalse(GraphicsEnvironment.isHeadless(),
+                                "requires a display");
+
+        TrackingSimulatorFrame frame = new TrackingSimulatorFrame();
+        try {
+            frame.resetTracking();
+
+            VSSerialize serialize = new VSSerialize();
+            VSSimulator simulator = serialize.openSimulator(RAFT_FILE, frame);
+            assertNotNull(simulator);
+
+            SwingUtilities.invokeAndWait(() -> { });
+
+            assertEquals(simulator, frame.getCurrentSimulator());
+            assertEquals(60, simulator.getPrefs().getInteger("sim.seconds"));
+            assertEquals(60000L, simulator.getSimulatorCanvas().getUntilTime());
         } finally {
             SwingUtilities.invokeAndWait(frame::dispose);
         }

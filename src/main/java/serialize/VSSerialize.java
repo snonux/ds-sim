@@ -219,32 +219,32 @@ public final class VSSerialize {
             // Copy non-string values from serialized prefs
             for (String key : serializedPrefs.getIntegerKeySet()) {
                 if (!key.startsWith("lang.")) {
-                    prefs.initInteger(key, serializedPrefs.getInteger(key));
+                    prefs.setInteger(key, serializedPrefs.getInteger(key));
                 }
             }
             for (String key : serializedPrefs.getBooleanKeySet()) {
                 if (!key.startsWith("lang.")) {
-                    prefs.initBoolean(key, serializedPrefs.getBoolean(key));
+                    prefs.setBoolean(key, serializedPrefs.getBoolean(key));
                 }
             }
             for (String key : serializedPrefs.getFloatKeySet()) {
                 if (!key.startsWith("lang.")) {
-                    prefs.initFloat(key, serializedPrefs.getFloat(key));
+                    prefs.setFloat(key, serializedPrefs.getFloat(key));
                 }
             }
             for (String key : serializedPrefs.getColorKeySet()) {
                 if (!key.startsWith("lang.")) {
-                    prefs.initColor(key, serializedPrefs.getColor(key));
+                    prefs.setColor(key, serializedPrefs.getColor(key));
                 }
             }
             for (String key : serializedPrefs.getVectorKeySet()) {
                 if (!key.startsWith("lang.")) {
-                    prefs.initVector(key, serializedPrefs.getVector(key));
+                    prefs.setVector(key, serializedPrefs.getVector(key));
                 }
             }
             for (String key : serializedPrefs.getLongKeySet()) {
                 if (!key.startsWith("lang.")) {
-                    prefs.initLong(key, serializedPrefs.getLong(key));
+                    prefs.setLong(key, serializedPrefs.getLong(key));
                 }
             }
 
@@ -256,6 +256,41 @@ public final class VSSerialize {
             // Store the current prefs in the serialize object for use during deserialization
             this.setObject("current_prefs", prefs);
             simulator.deserialize(this, objectInputStream);
+
+            // Reapply saved non-localized values after deserialization so any
+            // simulator-side resets do not leave defaults like sim.seconds=15.
+            VSPrefs simulatorPrefs = simulator.getPrefs();
+            for (String key : serializedPrefs.getIntegerKeySet()) {
+                if (!key.startsWith("lang.")) {
+                    simulatorPrefs.setInteger(key, serializedPrefs.getInteger(key));
+                }
+            }
+            for (String key : serializedPrefs.getBooleanKeySet()) {
+                if (!key.startsWith("lang.")) {
+                    simulatorPrefs.setBoolean(key, serializedPrefs.getBoolean(key));
+                }
+            }
+            for (String key : serializedPrefs.getFloatKeySet()) {
+                if (!key.startsWith("lang.")) {
+                    simulatorPrefs.setFloat(key, serializedPrefs.getFloat(key));
+                }
+            }
+            for (String key : serializedPrefs.getColorKeySet()) {
+                if (!key.startsWith("lang.")) {
+                    simulatorPrefs.setColor(key, serializedPrefs.getColor(key));
+                }
+            }
+            for (String key : serializedPrefs.getVectorKeySet()) {
+                if (!key.startsWith("lang.")) {
+                    simulatorPrefs.setVector(key, serializedPrefs.getVector(key));
+                }
+            }
+            for (String key : serializedPrefs.getLongKeySet()) {
+                if (!key.startsWith("lang.")) {
+                    simulatorPrefs.setLong(key, serializedPrefs.getLong(key));
+                }
+            }
+            simulator.updateFromPrefs();
 
         } catch (Exception e) {
             e.printStackTrace();
