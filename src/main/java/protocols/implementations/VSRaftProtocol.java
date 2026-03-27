@@ -103,6 +103,11 @@ public class VSRaftProtocol extends VSAbstractProtocol {
         handleMessage(recvMessage);
     }
 
+    @Override
+    protected boolean isRelevantMessageForContext(VSMessage message) {
+        return isServer() || isClient();
+    }
+
     /* (non-Javadoc)
      * @see protocols.VSAbstractProtocol#onServerSchedule()
      */
@@ -366,7 +371,10 @@ public class VSRaftProtocol extends VSAbstractProtocol {
         heartbeatAck.setInteger("term", currentTerm);
         heartbeatAck.setInteger("pid", process.getProcessID());
         heartbeatAck.setInteger("targetPid", messageLeaderId);
+        boolean previousContextIsServer = currentContextIsServer();
+        currentContextIsServer(true);
         sendMessage(heartbeatAck);
+        currentContextIsServer(previousContextIsServer);
     }
 
     /**
@@ -417,7 +425,10 @@ public class VSRaftProtocol extends VSAbstractProtocol {
         voteResponse.setInteger("pid", process.getProcessID());
         voteResponse.setBoolean("voteGranted", voteGranted);
         voteResponse.setInteger("targetPid", candidateId);
+        boolean previousContextIsServer = currentContextIsServer();
+        currentContextIsServer(true);
         sendMessage(voteResponse);
+        currentContextIsServer(previousContextIsServer);
     }
 
     /**
@@ -487,7 +498,10 @@ public class VSRaftProtocol extends VSAbstractProtocol {
         appendAck.setInteger("pid", process.getProcessID());
         appendAck.setInteger("logIndex", messageLogIndex);
         appendAck.setInteger("targetPid", messageLeaderId);
+        boolean previousContextIsServer = currentContextIsServer();
+        currentContextIsServer(true);
         sendMessage(appendAck);
+        currentContextIsServer(previousContextIsServer);
     }
 
     /**

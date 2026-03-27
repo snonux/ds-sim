@@ -96,10 +96,12 @@ public class SimulationFactory {
             .activateClientsAt(100, 1)
             .activateClientsAt(1700, 2)
             // Bias process 1 toward a fast, clean post-crash election while
-            // keeping process 2's timeout comfortably behind it.
-            .setProtocolLong(1, "electionTimeout", 4000)
+            // keeping process 2's timeout comfortably behind it. The shorter
+            // timeout also keeps the headless replay active long enough to
+            // reach the first post-crash election deterministically.
+            .setProtocolLong(1, "electionTimeout", 2500)
             .setProtocolLong(1, "electionJitter", 0)
-            .setProtocolLong(2, "electionTimeout", 9000)
+            .setProtocolLong(2, "electionTimeout", 12000)
             .setProtocolLong(2, "electionJitter", 0)
             .addCrashEvent(0, 3500);
     }

@@ -180,8 +180,8 @@ abstract public class VSAbstractProtocol extends VSAbstractEvent {
      * This method:
      * <ul>
      *   <li>Filters out messages for other protocols</li>
-     *   <li>Ensures server/client initialization</li>
-     *   <li>Delegates to onServerRecv() or onClientRecv() based on context</li>
+     *   <li>Routes messages to the active role(s) without double-delivering
+     *       to dual-role peers</li>
      * </ul>
      *
      * @param message the received message
@@ -191,6 +191,21 @@ abstract public class VSAbstractProtocol extends VSAbstractEvent {
     public final void onMessageRecvStart(VSMessage message) {
         if (isIncorrectProtocol(message))
             return;
+
+        if (isServer && isClient) {
+            if (message.isServerMessage()) {
+                currentContextIsServer(false);
+                if (!isClientInitialized)
+                    onInit();
+                onClientRecv(message);
+            } else {
+                currentContextIsServer(true);
+                if (!isServerInitialized)
+                    onInit();
+                onServerRecv(message);
+            }
+            return;
+        }
 
         if (isServer) {
             currentContextIsServer(true);
@@ -226,6 +241,18 @@ abstract public class VSAbstractProtocol extends VSAbstractEvent {
         if (isIncorrectProtocol(message))
             return false;
 
+        return isRelevantMessageForContext(message);
+    }
+
+    /**
+     * Checks whether a message is relevant for this protocol instance.
+     * Subclasses can relax or specialize the default server/client routing
+     * rules while keeping the protocol-name filter intact.
+     *
+     * @param message the message to check
+     * @return true if the message should be processed by this protocol instance
+     */
+    protected boolean isRelevantMessageForContext(VSMessage message) {
         if (message.isServerMessage()) {
             if (!isClient)
                 return false;

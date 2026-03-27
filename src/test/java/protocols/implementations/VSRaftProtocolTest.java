@@ -390,6 +390,33 @@ class VSRaftProtocolTest {
     }
 
     @Test
+    void testDualRoleVoteRequestIsHandledOnce() throws Exception {
+        protocol.currentContextIsServer(false);
+        protocol.isClient(true);
+        protocol.isServer(true);
+        protocol.onInit();
+        clearInvocations(mockProcess, mockTaskManager);
+        when(mockProcess.getTime()).thenReturn(200L, 200L);
+
+        VSMessage voteRequest = new VSMessage();
+        setMessageProtocolClassname(voteRequest, VSRaftProtocol.class.getName());
+        setMessageServerFlag(voteRequest, true);
+        voteRequest.setString("type", "voteRequest");
+        voteRequest.setInteger("term", 2);
+        voteRequest.setInteger("candidateId", 11);
+
+        ArgumentCaptor<VSMessage> messageCaptor =
+            ArgumentCaptor.forClass(VSMessage.class);
+
+        protocol.onMessageRecvStart(voteRequest);
+
+        verify(mockProcess).sendMessage(messageCaptor.capture());
+        assertEquals("voteResponse", messageCaptor.getValue().getString("type"));
+        assertEquals(2, messageCaptor.getValue().getInteger("term"));
+        assertTrue(messageCaptor.getValue().getBoolean("voteGranted"));
+    }
+
+    @Test
     void testClientReceiveHeartbeatBecomesFollowerResetsTimeoutAndSendsAck()
     throws Exception {
         protocol.currentContextIsServer(false);
@@ -762,6 +789,20 @@ class VSRaftProtocolTest {
         Field field = VSRaftProtocol.class.getDeclaredField(fieldName);
         field.setAccessible(true);
         field.setBoolean(protocol, value);
+    }
+
+    private void setMessageProtocolClassname(VSMessage message, String classname)
+    throws Exception {
+        Field field = VSMessage.class.getDeclaredField("protocolClassname");
+        field.setAccessible(true);
+        field.set(message, classname);
+    }
+
+    private void setMessageServerFlag(VSMessage message, boolean isServerMessage)
+    throws Exception {
+        Field field = VSMessage.class.getDeclaredField("isServerMessage");
+        field.setAccessible(true);
+        field.setBoolean(message, isServerMessage);
     }
 
     private int getIntField(String fieldName) throws Exception {
