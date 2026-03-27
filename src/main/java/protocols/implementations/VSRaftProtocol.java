@@ -86,7 +86,7 @@ public class VSRaftProtocol extends VSAbstractProtocol {
      * @see protocols.VSAbstractProtocol#onServerStart()
      */
     public void onServerStart() {
-        becomeLeader();
+        activateStartupLeader();
     }
 
     /* (non-Javadoc)
@@ -171,9 +171,25 @@ public class VSRaftProtocol extends VSAbstractProtocol {
     }
 
     /**
-     * Transitions this process into the leader role and starts heartbeats.
+     * Activates the initial leader role at startup and starts heartbeats.
+     */
+    private void activateStartupLeader() {
+        becomeLeader("Startup leader activated");
+    }
+
+    /**
+     * Transitions this process into the leader role after winning an election.
      */
     private void becomeLeader() {
+        becomeLeader("Leader elected by majority vote");
+    }
+
+    /**
+     * Transitions this process into the leader role and starts heartbeats.
+     *
+     * @param logPrefix the prefix to use for the leader transition log message
+     */
+    private void becomeLeader(String logPrefix) {
         isLeader = true;
         isCandidate = false;
         votesReceived = 0;
@@ -182,7 +198,7 @@ public class VSRaftProtocol extends VSAbstractProtocol {
         leaderId = process.getProcessID();
         lastHeartbeatTime = process.getTime();
         isServer(true);
-        log("Leader elected: process " + leaderId + " (term " + currentTerm + ")");
+        log(logPrefix + ": process " + leaderId + " (term " + currentTerm + ")");
 
         if (!getLongKeySet().contains("heartbeatInterval")) {
             onServerInit();
