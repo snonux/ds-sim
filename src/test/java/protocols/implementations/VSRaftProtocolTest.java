@@ -149,6 +149,16 @@ class VSRaftProtocolTest {
     }
 
     @Test
+    void testOnClientInitWithoutProcessOnlyRegistersPrefs() {
+        VSRaftProtocol detachedProtocol = new VSRaftProtocol();
+
+        detachedProtocol.onClientInit();
+
+        assertEquals(4000L, detachedProtocol.getLong("electionTimeout"));
+        assertEquals(2000L, detachedProtocol.getLong("electionJitter"));
+    }
+
+    @Test
     void testOnClientScheduleStartsElectionAfterTimeout() throws Exception {
         protocol.currentContextIsServer(false);
         protocol.onClientInit();

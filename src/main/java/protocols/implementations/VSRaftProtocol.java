@@ -77,7 +77,9 @@ public class VSRaftProtocol extends VSAbstractProtocol {
     public void onClientInit() {
         initLong("electionTimeout", 4000, "Base election timeout", "ms");
         initLong("electionJitter", 2000, "Election timeout jitter", "ms");
-        resetElectionTimeout();
+        if (process != null) {
+            resetElectionTimeout();
+        }
     }
 
     /* (non-Javadoc)
