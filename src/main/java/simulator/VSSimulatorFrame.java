@@ -504,6 +504,7 @@ public class VSSimulatorFrame extends VSFrame {
         tabbedPane.addTab(prefs.getString("lang.simulator")
                           + " " + simulator.getSimulatorNum(), simulator);
         tabbedPane.setSelectedComponent(simulator);
+        currentSimulator = simulator;
 
         if (simulators.size() == 1) {
             menuEdit.setEnabled(true);
@@ -576,6 +577,9 @@ public class VSSimulatorFrame extends VSFrame {
      * Starts the current simulator
      */
     public void startCurrentSimulator() {
+        if (currentSimulator == null)
+            return;
+
         VSMenuItemStates menuItemState =
             currentSimulator.getMenuItemStates();
         menuItemState.setStart(false);
@@ -584,6 +588,23 @@ public class VSSimulatorFrame extends VSFrame {
         menuItemState.setReplay(true);
         currentSimulator.getSimulatorCanvas().play();
         updateSimulatorMenu();
+    }
+
+    /**
+     * Opens the given simulator file and starts playback if load succeeds.
+     *
+     * @param filename the simulation file to open
+     *
+     * @return the loaded simulator, or null if loading failed
+     */
+    public VSSimulator openAndStartSimulator(String filename) {
+        VSSerialize serialize = new VSSerialize();
+        VSSimulator simulator = serialize.openSimulator(filename, this);
+
+        if (simulator != null)
+            startCurrentSimulator();
+
+        return simulator;
     }
 
     /**

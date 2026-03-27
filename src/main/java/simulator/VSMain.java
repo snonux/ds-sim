@@ -51,6 +51,21 @@ public class VSMain {
     }
 
     /**
+     * Resolves the initial simulation filename from the CLI arguments.
+     *
+     * @param args the arguments passed to main
+     *
+     * @return the first non-blank argument, or null if none was provided
+     */
+    static String resolveStartupSimulationFile(String[] args) {
+        if (args == null || args.length == 0 || args[0] == null)
+            return null;
+
+        String filename = args[0].trim();
+        return filename.isEmpty() ? null : filename;
+    }
+
+    /**
      * The main method.
      *
      * @param args the arguments
@@ -69,14 +84,18 @@ public class VSMain {
         javax.swing.JPopupMenu.setDefaultLightWeightPopupEnabled(false);
         VSPrefs prefs = VSDefaultPrefs.init();
         VSRegisteredEvents.init(prefs);
-        
+        VSMain.prefs = prefs;
+
         // Wait for splash screen to finish before showing main window
         try {
             Thread.sleep(3000);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        
-        new VSMain(prefs);
+
+        VSSimulatorFrame simulatorFrame = new VSSimulatorFrame(prefs, null);
+        String startupSimulationFile = resolveStartupSimulationFile(args);
+        if (startupSimulationFile != null)
+            simulatorFrame.openAndStartSimulator(startupSimulationFile);
     }
 }
