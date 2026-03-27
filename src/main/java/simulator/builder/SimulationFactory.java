@@ -103,6 +103,8 @@ public class SimulationFactory {
             .setProtocolLong(1, "electionJitter", 0)
             .setProtocolLong(2, "electionTimeout", 12000)
             .setProtocolLong(2, "electionJitter", 0)
-            .addCrashEvent(0, 3500);
+            .addCrashEvent(0, 3500)
+            .addRecoveryEvent(0, 12000)
+            .addCrashEvent(2, 20000);
     }
 }

@@ -89,6 +89,9 @@ class SimulationBuilderTest {
                                     StandardCharsets.ISO_8859_1);
         assertTrue(content.contains("VSRaftProtocol"), "Should contain Raft protocol");
         assertTrue(content.contains("VSProcessCrashEvent"), "Should contain crash event");
+        assertTrue(content.contains("VSProcessRecoverEvent"), "Should contain recovery event");
+        assertTrue(countOccurrences(content, "VSProcessCrashEvent") >= 2,
+                   "Should contain two crash events for different processes");
     }
 
     @Test
@@ -124,5 +127,17 @@ class SimulationBuilderTest {
         assertThrows(IllegalArgumentException.class, () -> {
             SimulationFactory.createBerkeleyTimeSimulation(1); // Too few processes
         });
+    }
+
+    private int countOccurrences(String content, String needle) {
+        int count = 0;
+        int index = 0;
+
+        while ((index = content.indexOf(needle, index)) != -1) {
+            count++;
+            index += needle.length();
+        }
+
+        return count;
     }
 }
