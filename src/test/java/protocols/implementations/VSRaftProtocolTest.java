@@ -379,6 +379,44 @@ class VSRaftProtocolTest {
     }
 
     @Test
+    void testClientReceiveHeartbeatBecomesFollowerResetsTimeoutAndSendsAck()
+    throws Exception {
+        protocol.currentContextIsServer(false);
+        protocol.onClientInit();
+        clearInvocations(mockProcess, mockTaskManager);
+        setIntField("currentTerm", 1);
+        setBooleanField("isCandidate", true);
+        when(mockProcess.getTime()).thenReturn(350L, 350L);
+
+        VSMessage heartbeat = new VSMessage();
+        heartbeat.setString("type", "heartbeat");
+        heartbeat.setInteger("term", 2);
+        heartbeat.setInteger("leaderId", 11);
+
+        ArgumentCaptor<VSMessage> messageCaptor =
+            ArgumentCaptor.forClass(VSMessage.class);
+        ArgumentCaptor<VSTask> taskCaptor = ArgumentCaptor.forClass(VSTask.class);
+
+        protocol.onClientRecv(heartbeat);
+
+        verify(mockProcess).sendMessage(messageCaptor.capture());
+        verify(mockTaskManager, times(2)).removeAllTasks(any());
+        verify(mockTaskManager).addTask(taskCaptor.capture());
+
+        VSMessage heartbeatAck = messageCaptor.getValue();
+        assertEquals("heartbeatAck", heartbeatAck.getString("type"));
+        assertEquals(2, heartbeatAck.getInteger("term"));
+        assertEquals(7, heartbeatAck.getInteger("pid"));
+        assertEquals(11, heartbeatAck.getInteger("targetPid"));
+        assertEquals(2, getIntField("currentTerm"));
+        assertEquals(11, getIntField("leaderId"));
+        assertFalse(getBooleanField("isLeader"));
+        assertFalse(getBooleanField("isCandidate"));
+        assertEquals(350L, getLongField("lastHeartbeatTime"));
+        assertEquals(4850L, taskCaptor.getValue().getTaskTime());
+    }
+
+    @Test
     void testVoteResponseMajorityPromotesCandidateToLeader() throws Exception {
         protocol.currentContextIsServer(false);
         setIntField("currentTerm", 3);
@@ -474,6 +512,42 @@ class VSRaftProtocolTest {
         assertFalse(getBooleanField("isCandidate"));
         assertFalse(getBooleanField("isLeader"));
         assertEquals(5000L, taskCaptor.getValue().getTaskTime());
+    }
+
+    @Test
+    void testServerReceiveHeartbeatAckForLeaderLogsAck() throws Exception {
+        protocol.onStart();
+        clearInvocations(mockProcess, mockTaskManager);
+
+        VSMessage heartbeatAck = new VSMessage();
+        heartbeatAck.setString("type", "heartbeatAck");
+        heartbeatAck.setInteger("term", 0);
+        heartbeatAck.setInteger("pid", 2);
+        heartbeatAck.setInteger("targetPid", 7);
+
+        protocol.onServerRecv(heartbeatAck);
+
+        verify(mockProcess).log("Heartbeat ACK from process 2 received");
+        verify(mockTaskManager, never()).removeAllTasks(any());
+        verify(mockTaskManager, never()).addTask(any());
+    }
+
+    @Test
+    void testHeartbeatAckForDifferentTargetDoesNotLog() throws Exception {
+        protocol.onStart();
+        clearInvocations(mockProcess, mockTaskManager);
+
+        VSMessage heartbeatAck = new VSMessage();
+        heartbeatAck.setString("type", "heartbeatAck");
+        heartbeatAck.setInteger("term", 0);
+        heartbeatAck.setInteger("pid", 2);
+        heartbeatAck.setInteger("targetPid", 99);
+
+        protocol.onServerRecv(heartbeatAck);
+
+        verify(mockProcess, never()).log(anyString());
+        verify(mockTaskManager, never()).removeAllTasks(any());
+        verify(mockTaskManager, never()).addTask(any());
     }
 
     @Test
