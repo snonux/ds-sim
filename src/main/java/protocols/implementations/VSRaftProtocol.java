@@ -311,26 +311,26 @@ public class VSRaftProtocol extends VSAbstractProtocol {
         }
 
         switch (messageType) {
-            case "heartbeat":
-                handleHeartbeat(recvMessage);
-                break;
-            case "heartbeatAck":
-                handleHeartbeatAck(recvMessage);
-                break;
-            case "voteRequest":
-                handleVoteRequest(recvMessage);
-                break;
-            case "voteResponse":
-                handleVoteResponse(recvMessage);
-                break;
-            case "appendEntry":
-                handleAppendEntry(recvMessage);
-                break;
-            case "appendAck":
-                handleAppendAck(recvMessage);
-                break;
-            default:
-                break;
+        case "heartbeat":
+            handleHeartbeat(recvMessage);
+            break;
+        case "heartbeatAck":
+            handleHeartbeatAck(recvMessage);
+            break;
+        case "voteRequest":
+            handleVoteRequest(recvMessage);
+            break;
+        case "voteResponse":
+            handleVoteResponse(recvMessage);
+            break;
+        case "appendEntry":
+            handleAppendEntry(recvMessage);
+            break;
+        case "appendAck":
+            handleAppendAck(recvMessage);
+            break;
+        default:
+            break;
         }
     }
 

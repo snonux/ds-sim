@@ -177,7 +177,7 @@ class VSRaftProtocolTest {
         assertEquals(9200L, getLongField("electionDeadline"));
         assertFalse(
             ((VSProtocolScheduleEvent) taskCaptor.getValue().getEvent())
-                .isServerSchedule());
+            .isServerSchedule());
     }
 
     @Test
@@ -272,7 +272,7 @@ class VSRaftProtocolTest {
         assertEquals(4800L, taskCaptor.getValue().getTaskTime());
         assertFalse(
             ((VSProtocolScheduleEvent) taskCaptor.getValue().getEvent())
-                .isServerSchedule());
+            .isServerSchedule());
     }
 
     @Test
@@ -732,7 +732,7 @@ class VSRaftProtocolTest {
 
     private void invokeBecomeFollower(int term, int leaderId) throws Exception {
         Method method = VSRaftProtocol.class.getDeclaredMethod(
-            "becomeFollower", int.class, int.class);
+                            "becomeFollower", int.class, int.class);
         method.setAccessible(true);
         method.invoke(protocol, term, leaderId);
     }
