@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.FileOutputStream;
+import java.io.ObjectOutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
@@ -15,6 +17,8 @@ import org.junit.jupiter.api.Test;
 
 import events.implementations.VSProcessCrashEvent;
 import events.implementations.VSProcessRecoverEvent;
+import prefs.VSSerializablePrefs;
+import serialize.VSSerialize;
 import simulator.VSSimulator;
 import simulator.VSSimulatorVisualization;
 import simulator.builder.SimulationBuilder;
@@ -148,6 +152,57 @@ class VSTaskManagerCrashRecoveryIntegrationTest {
     }
 
     @Test
+    @DisplayName("Loading preserves programmed replay tasks but not ordinary runtime tasks")
+    void loadingPreservesProgrammedReplayTasksWithoutPromotingRuntimeTasks()
+    throws Exception {
+        Path replayFile = Files.createTempFile("programmed-replay", ".dat");
+        Path runtimeFile = Files.createTempFile("runtime-task", ".dat");
+
+        VSSimulator replaySimulator = new SimulationBuilder()
+            .withProcesses(3)
+            .withDuration(1000)
+            .addCrashEvent(0, 5)
+            .save(replayFile.toString())
+            .getSimulator();
+        simulatorToStop = replaySimulator;
+
+        HeadlessLoader.LoadedSimulation replayLoaded =
+            HeadlessLoader.load(replayFile.toString(), replaySimulator.getPrefs());
+        loadedSimulatorToStop = replayLoaded.getSimulator();
+
+        VSTaskManager replayTaskManager = replayLoaded.getVisualization().getTaskManager();
+        assertEquals(1, replayTaskManager.getProcessGlobalTasks(
+                         replayLoaded.getVisualization().getProcess(0)).size(),
+                     "builder-authored replay task should remain visible after load");
+
+        loadedSimulatorToStop.getSimulatorCanvas().stopThread();
+        loadedSimulatorToStop = null;
+
+        VSSimulator runtimeSimulator = new SimulationBuilder()
+            .withProcesses(3)
+            .withDuration(1000)
+            .getSimulator();
+        simulatorToStop = runtimeSimulator;
+
+        VSSimulatorVisualization runtimeVisualization = runtimeSimulator.getSimulatorCanvas();
+        VSInternalProcess runtimeProcess = runtimeVisualization.getProcess(0);
+        VSTask runtimeTask = new VSTask(5, runtimeProcess, new VSProcessCrashEvent(), VSTask.GLOBAL);
+        runtimeVisualization.getTaskManager().addTask(runtimeTask);
+        assertFalse(runtimeTask.isProgrammed(), "runtime task should remain non-programmed before save");
+
+        saveSimulation(runtimeFile, runtimeSimulator);
+
+        HeadlessLoader.LoadedSimulation runtimeLoaded =
+            HeadlessLoader.load(runtimeFile.toString(), runtimeSimulator.getPrefs());
+        loadedSimulatorToStop = runtimeLoaded.getSimulator();
+
+        VSTaskManager runtimeTaskManager = runtimeLoaded.getVisualization().getTaskManager();
+        assertEquals(0, runtimeTaskManager.getProcessGlobalTasks(
+                         runtimeLoaded.getVisualization().getProcess(0)).size(),
+                     "ordinary non-programmed runtime task must stay hidden after load");
+    }
+
+    @Test
     @DisplayName("Live GUI-style event injection supports recover and later crash")
     void liveEventInjectionSupportsRecoverAndLaterCrash() throws Exception {
         VSSimulator simulator = new SimulationBuilder()
@@ -212,6 +267,39 @@ class VSTaskManagerCrashRecoveryIntegrationTest {
     private void stopSimulatorThread(VSSimulator simulator) {
         if (simulator != null) {
             simulator.getSimulatorCanvas().stopThread();
+        }
+    }
+
+    private void saveSimulation(Path file, VSSimulator simulator) throws Exception {
+        VSSerialize serialize = new VSSerialize();
+        try (FileOutputStream fos = new FileOutputStream(file.toFile());
+             ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+            VSSerializablePrefs serializablePrefs = new VSSerializablePrefs();
+
+            for (String key : simulator.getPrefs().getIntegerKeySet()) {
+                serializablePrefs.initInteger(key, simulator.getPrefs().getInteger(key));
+            }
+            for (String key : simulator.getPrefs().getBooleanKeySet()) {
+                serializablePrefs.initBoolean(key, simulator.getPrefs().getBoolean(key));
+            }
+            for (String key : simulator.getPrefs().getStringKeySet()) {
+                serializablePrefs.initString(key, simulator.getPrefs().getString(key));
+            }
+            for (String key : simulator.getPrefs().getFloatKeySet()) {
+                serializablePrefs.initFloat(key, simulator.getPrefs().getFloat(key));
+            }
+            for (String key : simulator.getPrefs().getColorKeySet()) {
+                serializablePrefs.initColor(key, simulator.getPrefs().getColor(key));
+            }
+            for (String key : simulator.getPrefs().getVectorKeySet()) {
+                serializablePrefs.initVector(key, simulator.getPrefs().getVector(key));
+            }
+            for (String key : simulator.getPrefs().getLongKeySet()) {
+                serializablePrefs.initLong(key, simulator.getPrefs().getLong(key));
+            }
+
+            serializablePrefs.serialize(serialize, oos);
+            simulator.serialize(serialize, oos);
         }
     }
 }

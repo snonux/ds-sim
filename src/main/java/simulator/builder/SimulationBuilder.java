@@ -308,7 +308,7 @@ public class SimulationBuilder {
             // Create task
             VSTask task = new VSTask(st.time, process, st.event, 
                 st.isGlobalTimed ? VSTask.GLOBAL : VSTask.LOCAL);
-            taskManager.addTask(task);
+            taskManager.addTask(task, VSTaskManager.PROGRAMMED);
         }
     }
 

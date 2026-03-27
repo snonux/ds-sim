@@ -553,12 +553,7 @@ public class VSTaskManager implements VSSerializable {
 
         for (int i = 0; i < numTasks; ++i) {
             VSTask task = new VSTask(serialize, objectInputStream);
-            /*
-             * Serialized tasks define the replay state of a loaded simulation.
-             * Register them as programmed so they remain visible in the Event
-             * view and survive reset/replay after deserialization.
-             */
-            addTask(task, PROGRAMMED);
+            addTask(task, task.isProgrammed());
         }
 
         /** For later backwards compatibility, to add more stuff */
