@@ -277,6 +277,8 @@ public class VSRaftProtocol extends VSAbstractProtocol {
      * Sends a simplified append-entry request for the configured log entry.
      */
     private void sendAppendEntry() {
+        ackPids.clear();
+
         if (getVectorKeySet().contains("pids")) {
             ackPids.addAll(getVector("pids"));
         }
@@ -381,6 +383,7 @@ public class VSRaftProtocol extends VSAbstractProtocol {
     private void handleAppendEntry(VSMessage recvMessage) {
         int messageTerm = recvMessage.getInteger("term");
         int messageLeaderId = recvMessage.getInteger("leaderId");
+        int messageLogIndex = recvMessage.getInteger("logIndex");
 
         if (messageTerm > currentTerm) {
             becomeFollower(messageTerm, messageLeaderId);
@@ -393,13 +396,17 @@ public class VSRaftProtocol extends VSAbstractProtocol {
             return;
         }
 
-        logIndex++;
+        if (messageLogIndex != logIndex + 1) {
+            return;
+        }
+
+        logIndex = messageLogIndex;
 
         VSMessage appendAck = new VSMessage();
         appendAck.setString("type", "appendAck");
         appendAck.setInteger("term", currentTerm);
         appendAck.setInteger("pid", process.getProcessID());
-        appendAck.setInteger("logIndex", logIndex);
+        appendAck.setInteger("logIndex", messageLogIndex);
         appendAck.setInteger("targetPid", messageLeaderId);
         sendMessage(appendAck);
     }
@@ -410,17 +417,25 @@ public class VSRaftProtocol extends VSAbstractProtocol {
      * @param recvMessage the append acknowledgement
      */
     private void handleAppendAck(VSMessage recvMessage) {
+        int messageTerm = recvMessage.getInteger("term");
         Integer responderPid = recvMessage.getIntegerObj("pid");
+        int ackLogIndex = recvMessage.getInteger("logIndex");
+
+        if (messageTerm > currentTerm) {
+            becomeFollower(messageTerm, -1);
+            return;
+        }
 
         if (!isLeader || !isForMe(recvMessage) || responderPid == null ||
+                messageTerm != currentTerm || ackLogIndex != logIndex ||
                 !ackPids.contains(responderPid)) {
             return;
         }
 
         ackPids.remove(responderPid);
 
-        if (ackPids.isEmpty()) {
-            commitIndex++;
+        if (ackPids.isEmpty() && commitIndex < ackLogIndex) {
+            commitIndex = ackLogIndex;
             log("Committed log index " + commitIndex);
         }
     }
