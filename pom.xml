@@ -90,6 +90,7 @@
                         <include>**/events/**/*Test.java</include>
                         <include>**/protocols/VSAbstractProtocolTest.java</include>
                         <include>**/protocols/implementations/VSPingPongProtocolTest.java</include>
+                        <include>**/simulator/VSMainTest.java</include>
                     </includes>
                     <excludes>
                         <!-- Exclude all GUI and headless simulation tests -->

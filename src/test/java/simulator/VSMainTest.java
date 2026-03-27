@@ -55,9 +55,12 @@ public class VSMainTest {
     void launchSimulatorFrameCreatesAndStartsOnSwingEdt() {
         VSPrefs prefs = VSDefaultPrefs.init();
         AtomicBoolean createdOnEdt = new AtomicBoolean(false);
+        AtomicBoolean openedOnEdt = new AtomicBoolean(false);
         AtomicReference<String> openedFilename = new AtomicReference<String>();
         VSSimulatorFrame frame = mock(VSSimulatorFrame.class);
         doAnswer(invocation -> {
+            openedOnEdt.set(javax.swing.SwingUtilities
+                            .isEventDispatchThread());
             openedFilename.set(invocation.getArgument(0, String.class));
             return null;
         }).when(frame).openAndStartSimulator("saved-simulations/raft.dat");
@@ -74,6 +77,7 @@ public class VSMainTest {
             });
 
         assertTrue(createdOnEdt.get());
+        assertTrue(openedOnEdt.get());
         assertNotNull(launchedFrame);
         assertSame(frame, launchedFrame);
         assertEquals("saved-simulations/raft.dat", openedFilename.get());
