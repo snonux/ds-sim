@@ -91,7 +91,7 @@ public class SimulationFactory {
         return new SimulationBuilder()
             .withProcesses(3)
             .withProtocol(SimulationBuilder.Protocols.RAFT)
-            .withDuration(30000)
+            .withDuration(60000)
             .activateServers(0)
             .activateClientsAt(100, 1)
             .activateClientsAt(1700, 2)

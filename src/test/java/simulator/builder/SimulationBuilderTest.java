@@ -75,12 +75,15 @@ class SimulationBuilderTest {
     void testCreateRaftSimulation() throws Exception {
         String filename = TEST_DIR + "test-raft.dat";
 
-        SimulationFactory.createRaftSimulation()
+        SimulationBuilder builder = SimulationFactory.createRaftSimulation();
+        builder
             .save(filename);
 
         File file = new File(filename);
         assertTrue(file.exists(), "Simulation file should be created");
         assertTrue(file.length() > 10000, "Raft simulation should be larger");
+        assertEquals(60, builder.getSimulator().getPrefs().getInteger("sim.seconds"),
+                     "Raft simulation should replay for 60 seconds");
 
         String content = new String(Files.readAllBytes(file.toPath()),
                                     StandardCharsets.ISO_8859_1);
