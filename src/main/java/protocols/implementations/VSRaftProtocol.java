@@ -384,18 +384,21 @@ public class VSRaftProtocol extends VSAbstractProtocol {
         int messageTerm = recvMessage.getInteger("term");
         int messageLeaderId = recvMessage.getInteger("leaderId");
         int messageLogIndex = recvMessage.getInteger("logIndex");
+        boolean isSameTerm = messageTerm == currentTerm;
+
+        if (messageTerm < currentTerm) {
+            return;
+        }
 
         if (messageTerm > currentTerm) {
             becomeFollower(messageTerm, messageLeaderId);
-        } else {
-            return;
         }
 
         if (messageLogIndex != logIndex + 1) {
             return;
         }
 
-        if (messageTerm == currentTerm) {
+        if (isSameTerm) {
             leaderId = messageLeaderId;
             isLeader = false;
             isCandidate = false;

@@ -525,8 +525,8 @@ class VSRaftProtocolTest {
         protocol.onClientRecv(appendEntry);
 
         verify(mockProcess).sendMessage(messageCaptor.capture());
-        verify(mockTaskManager, times(3)).removeAllTasks(any());
-        verify(mockTaskManager, times(2)).addTask(taskCaptor.capture());
+        verify(mockTaskManager, times(2)).removeAllTasks(any());
+        verify(mockTaskManager).addTask(taskCaptor.capture());
 
         VSMessage appendAck = messageCaptor.getValue();
         assertEquals("appendAck", appendAck.getString("type"));
@@ -574,7 +574,7 @@ class VSRaftProtocolTest {
     }
 
     @Test
-    void testLeaderAppendQuorumStateDrainsAndCommitsAfterFollowerRoundTrips()
+    void testLeaderAppendQuorumStateDrainsAndCommitsAfterSameTermFollowerRoundTrips()
     throws Exception {
         LeaderHarness leaderHarness = createLeaderHarness(11, 300L);
         leaderHarness.protocol.onStart();
@@ -588,7 +588,7 @@ class VSRaftProtocolTest {
 
         protocol.currentContextIsServer(false);
         protocol.onClientInit();
-        setIntField("currentTerm", -1);
+        setIntField("currentTerm", 0);
         clearInvocations(mockProcess, mockTaskManager);
         when(mockProcess.getProcessID()).thenReturn(2);
         when(mockProcess.getTime()).thenReturn(700L, 700L);
@@ -608,7 +608,7 @@ class VSRaftProtocolTest {
         protocol.onClientReset();
         protocol.currentContextIsServer(false);
         protocol.onClientInit();
-        setIntField("currentTerm", -1);
+        setIntField("currentTerm", 0);
         clearInvocations(mockProcess, mockTaskManager);
         when(mockProcess.getProcessID()).thenReturn(3);
         when(mockProcess.getTime()).thenReturn(800L, 800L);
