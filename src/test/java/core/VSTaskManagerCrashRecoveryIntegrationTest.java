@@ -75,12 +75,46 @@ class VSTaskManagerCrashRecoveryIntegrationTest {
         loadedSimulatorToStop = loaded.getSimulator();
 
         VSSimulatorVisualization visualization = loaded.getVisualization();
-        runUntil(visualization, 20);
-
         assertFalse(visualization.getProcess(0).isCrashed(),
-                    "process 0 should recover after replay load");
+                    "process 0 should start alive after replay load");
+        assertFalse(visualization.getProcess(1).isCrashed(),
+                    "process 1 should start alive after replay load");
+
+        runUntil(visualization, 4);
+        assertFalse(visualization.getProcess(0).isCrashed(),
+                    "process 0 should stay alive before its crash point");
+        assertFalse(visualization.getProcess(1).isCrashed(),
+                    "process 1 should stay alive before process 0 crashes");
+
+        runUntil(visualization, 6);
+        assertTrue(visualization.getProcess(0).isCrashed(),
+                   "process 0 should crash immediately after its scheduled crash point");
+        assertFalse(visualization.getProcess(1).isCrashed(),
+                    "process 1 should still be alive while process 0 is crashed");
+
+        runUntil(visualization, 10);
+        assertTrue(visualization.getProcess(0).isCrashed(),
+                   "process 0 should remain crashed before its recover point");
+        assertFalse(visualization.getProcess(1).isCrashed(),
+                    "process 1 should still be alive before its later crash");
+
+        runUntil(visualization, 11);
+        assertFalse(visualization.getProcess(0).isCrashed(),
+                    "process 0 should recover immediately after its scheduled recover point");
+        assertFalse(visualization.getProcess(1).isCrashed(),
+                    "process 1 should still be alive before its crash point");
+
+        runUntil(visualization, 15);
+        assertFalse(visualization.getProcess(0).isCrashed(),
+                    "process 0 should stay recovered before process 1 crashes");
+        assertFalse(visualization.getProcess(1).isCrashed(),
+                    "process 1 should stay alive before its later crash point");
+
+        runUntil(visualization, 16);
+        assertFalse(visualization.getProcess(0).isCrashed(),
+                    "process 0 should remain recovered after replay load");
         assertTrue(visualization.getProcess(1).isCrashed(),
-                   "process 1 should still crash later in the replay");
+                   "process 1 should crash immediately after its later replay point");
     }
 
     @Test
