@@ -10,6 +10,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedList;
+import java.util.PriorityQueue;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -196,10 +198,26 @@ class VSTaskManagerCrashRecoveryIntegrationTest {
             HeadlessLoader.load(runtimeFile.toString(), runtimeSimulator.getPrefs());
         loadedSimulatorToStop = runtimeLoaded.getSimulator();
 
+        VSSimulatorVisualization loadedRuntimeVisualization = runtimeLoaded.getVisualization();
         VSTaskManager runtimeTaskManager = runtimeLoaded.getVisualization().getTaskManager();
+        assertEquals(1, getPendingGlobalTaskCount(runtimeTaskManager),
+                     "ordinary non-programmed runtime task should still be restored after load");
         assertEquals(0, runtimeTaskManager.getProcessGlobalTasks(
-                         runtimeLoaded.getVisualization().getProcess(0)).size(),
+                         loadedRuntimeVisualization.getProcess(0)).size(),
                      "ordinary non-programmed runtime task must stay hidden after load");
+
+        assertFalse(loadedRuntimeVisualization.getProcess(0).isCrashed(),
+                    "restored runtime task should not execute before its scheduled time");
+        runUntil(loadedRuntimeVisualization, 6);
+        assertTrue(loadedRuntimeVisualization.getProcess(0).isCrashed(),
+                   "restored runtime task should still execute after load");
+        assertEquals(0, getPendingGlobalTaskCount(runtimeTaskManager),
+                     "runtime task should leave the pending queue after execution");
+        assertEquals(0, getFulfilledProgrammedTaskCount(runtimeTaskManager),
+                     "executed runtime task must not become a programmed Event-view entry");
+        assertEquals(0, runtimeTaskManager.getProcessGlobalTasks(
+                         loadedRuntimeVisualization.getProcess(0)).size(),
+                     "executed runtime task must remain hidden from the Event view");
     }
 
     @Test
@@ -268,6 +286,20 @@ class VSTaskManagerCrashRecoveryIntegrationTest {
         if (simulator != null) {
             simulator.getSimulatorCanvas().stopThread();
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private int getPendingGlobalTaskCount(VSTaskManager taskManager) throws Exception {
+        Field field = VSTaskManager.class.getDeclaredField("globalTasks");
+        field.setAccessible(true);
+        return ((PriorityQueue<VSTask>) field.get(taskManager)).size();
+    }
+
+    @SuppressWarnings("unchecked")
+    private int getFulfilledProgrammedTaskCount(VSTaskManager taskManager) throws Exception {
+        Field field = VSTaskManager.class.getDeclaredField("fullfilledProgrammedTasks");
+        field.setAccessible(true);
+        return ((LinkedList<VSTask>) field.get(taskManager)).size();
     }
 
     private void saveSimulation(Path file, VSSimulator simulator) throws Exception {
