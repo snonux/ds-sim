@@ -1,9 +1,21 @@
 package simulator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+
+import java.awt.Component;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
+
+import prefs.VSDefaultPrefs;
+import prefs.VSPrefs;
 
 public class VSMainTest {
     @Test
@@ -23,5 +35,47 @@ public class VSMainTest {
                      VSMain.resolveStartupSimulationFile(
                          new String[] {"  saved-simulations/raft.dat  ",
                                        "ignored"}));
+    }
+
+    @Test
+    void runOnEventDispatchThreadExecutesOnSwingEdt() {
+        AtomicBoolean ranOnEdt = new AtomicBoolean(false);
+
+        VSMain.runOnEventDispatchThread(new Runnable() {
+            public void run() {
+                ranOnEdt.set(javax.swing.SwingUtilities
+                             .isEventDispatchThread());
+            }
+        });
+
+        assertTrue(ranOnEdt.get());
+    }
+
+    @Test
+    void launchSimulatorFrameCreatesAndStartsOnSwingEdt() {
+        VSPrefs prefs = VSDefaultPrefs.init();
+        AtomicBoolean createdOnEdt = new AtomicBoolean(false);
+        AtomicReference<String> openedFilename = new AtomicReference<String>();
+        VSSimulatorFrame frame = mock(VSSimulatorFrame.class);
+        doAnswer(invocation -> {
+            openedFilename.set(invocation.getArgument(0, String.class));
+            return null;
+        }).when(frame).openAndStartSimulator("saved-simulations/raft.dat");
+
+        VSSimulatorFrame launchedFrame = VSMain.launchSimulatorFrame(
+            prefs, null, "saved-simulations/raft.dat",
+            new VSMain.SimulatorFrameFactory() {
+                public VSSimulatorFrame create(VSPrefs framePrefs,
+                                               Component relativeTo) {
+                    createdOnEdt.set(javax.swing.SwingUtilities
+                                     .isEventDispatchThread());
+                    return frame;
+                }
+            });
+
+        assertTrue(createdOnEdt.get());
+        assertNotNull(launchedFrame);
+        assertSame(frame, launchedFrame);
+        assertEquals("saved-simulations/raft.dat", openedFilename.get());
     }
 }

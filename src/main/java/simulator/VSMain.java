@@ -1,9 +1,13 @@
 package simulator;
 
 import java.awt.Component;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Locale;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.UIManager;
+import javax.swing.SwingUtilities;
 
 import events.VSRegisteredEvents;
 import prefs.VSDefaultPrefs;
@@ -16,6 +20,10 @@ import prefs.VSPrefs;
  * @author Paul C. Buetow
  */
 public class VSMain {
+    interface SimulatorFrameFactory {
+        VSSimulatorFrame create(VSPrefs prefs, Component relativeTo);
+    }
+
     /** The global preferences */
     public static VSPrefs prefs;
 
@@ -65,6 +73,61 @@ public class VSMain {
         return filename.isEmpty() ? null : filename;
     }
 
+    static VSSimulatorFrame launchSimulatorFrame(VSPrefs prefs,
+                                                 Component relativeTo,
+                                                 String startupSimulationFile) {
+        return launchSimulatorFrame(prefs, relativeTo, startupSimulationFile,
+                                    new SimulatorFrameFactory() {
+            public VSSimulatorFrame create(VSPrefs framePrefs,
+                                           Component frameRelativeTo) {
+                return new VSSimulatorFrame(framePrefs, frameRelativeTo);
+            }
+        });
+    }
+
+    static VSSimulatorFrame launchSimulatorFrame(VSPrefs prefs,
+                                                 Component relativeTo,
+                                                 String startupSimulationFile,
+                                                 SimulatorFrameFactory factory) {
+        Objects.requireNonNull(prefs, "prefs");
+        Objects.requireNonNull(factory, "factory");
+
+        AtomicReference<VSSimulatorFrame> frameRef =
+            new AtomicReference<VSSimulatorFrame>();
+        Runnable openWindow = new Runnable() {
+            public void run() {
+                VSSimulatorFrame simulatorFrame =
+                    factory.create(prefs, relativeTo);
+                frameRef.set(simulatorFrame);
+                if (startupSimulationFile != null)
+                    simulatorFrame.openAndStartSimulator(startupSimulationFile);
+            }
+        };
+
+        runOnEventDispatchThread(openWindow);
+        return frameRef.get();
+    }
+
+    static void runOnEventDispatchThread(Runnable action) {
+        Objects.requireNonNull(action, "action");
+
+        if (SwingUtilities.isEventDispatchThread()) {
+            action.run();
+            return;
+        }
+
+        try {
+            SwingUtilities.invokeAndWait(action);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while launching UI",
+                                            e);
+        } catch (InvocationTargetException e) {
+            throw new IllegalStateException("Failed to launch UI",
+                                            e.getCause());
+        }
+    }
+
     /**
      * The main method.
      *
@@ -93,9 +156,7 @@ public class VSMain {
             Thread.currentThread().interrupt();
         }
 
-        VSSimulatorFrame simulatorFrame = new VSSimulatorFrame(prefs, null);
         String startupSimulationFile = resolveStartupSimulationFile(args);
-        if (startupSimulationFile != null)
-            simulatorFrame.openAndStartSimulator(startupSimulationFile);
+        launchSimulatorFrame(prefs, null, startupSimulationFile);
     }
 }
